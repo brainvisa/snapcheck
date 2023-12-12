@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
     "populse-db >= 3",
     "soma-base >= 6",
+    "pyqt5",
 ]
 
 [project.optional-dependencies]
