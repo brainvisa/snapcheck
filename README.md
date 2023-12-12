@@ -11,5 +11,5 @@ pip install git+https://github.com/brainvisa/snapcheck
 ## Test
 
 ```
-python -m snapcheck /math/to/database
+python -m snapcheck /path/to/database
 ```
