@@ -18,9 +18,9 @@
       let div = document.getElementById("global_info");
       let ul = document.createElement("ul");
       div.appendChild(ul);
-      global_info.modalities.forEach(modality => {
+      global_info.data_types.forEach(data_type => {
         let li = document.createElement("li")
-        li.innerText = modality;
+        li.innerText = data_type;
         ul.appendChild(li);
       });
     }
