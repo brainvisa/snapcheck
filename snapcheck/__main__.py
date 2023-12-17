@@ -1,7 +1,9 @@
 import os
-from . import SnapcheckWebBackend, SnapshotsDatabase
 import sys
 import types
+
+from populse_db import Storage
+from . import SnapcheckWebBackend
 
 
 def web_server_gui(web_backend):
@@ -60,7 +62,9 @@ if command in ("view", "web"):
 elif command == "create":
     if os.path.exists(options.database):
         raise Exception(f"cannot overwirte file: {options.database}")
-    with SnapshotsDatabase(options.database).session(exclusive=True) as dbs:
+    database = Storage(options.database)
+    database.add_schema('snapcheck.schema')
+    with database.session(write=True) as dbs:
         dbs.snapshots.append(
             {
                 "orientation": "axial",
