@@ -8,8 +8,6 @@ from tempfile import TemporaryDirectory
 
 from snapcheck.snap.snap import Snap
 
-router = APIRouter()
-
 
 class SnapRouter(CRUDRouter):
     def __init__(self, store: SessionStore):
@@ -23,8 +21,12 @@ class SnapRouter(CRUDRouter):
 
     def get_image(self, snap_id: str, src: str, session=Depends(get_session_from_token)):
         # TODO: check the session ?
+        print(f"DEBUG: get_image called with snap_id={snap_id}, src={src}")
+        print(f"DEBUG: session={session}")
+        print(f"DEBUG: store items: {[item.id for item in session.items]}")
 
         item = self.store.get_by_id(snap_id)
+        print(f"DEBUG: item={item}")
         if item is None:
             raise HTTPException(status_code=404, detail="Snap not found")
 

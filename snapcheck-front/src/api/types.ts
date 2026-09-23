@@ -66,7 +66,7 @@ export interface OpenAPIConfig {
 
 // OpenAPI config object (replaces @lepton/api-client OpenAPI)
 export const OpenAPI: OpenAPIConfig = {
-  BASE: 'http://localhost:8000',
+  BASE: 'http://localhost:8050',
   VERSION: '1.0.0',
   WITH_CREDENTIALS: false,
   CREDENTIALS: 'include',

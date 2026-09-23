@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { OpenAPI } from '@lepton/api-client';
+import { useSnapServices } from '../../../api/snapServices';
 
 const ImageElementComponent: React.FC<{
     snapId: string;
@@ -8,20 +8,13 @@ const ImageElementComponent: React.FC<{
 }> = ({ snapId, src, style }) => {
 
     const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+    const snapServices = useSnapServices();
 
     useEffect(() => {
         let url: string | null = null;
         const fetchImage = async () => {
             try {
-                const response = await fetch(
-                    `${OpenAPI.BASE}/objects/${snapId}/image/${src}`,
-                    {
-                        method: 'GET',
-                        headers: OpenAPI.HEADERS || {}
-                    }
-                );
-                if (!response.ok) throw new Error('Image not found');
-                const blob = await response.blob();
+                const blob = await snapServices.getSnapImage(snapId, src);
                 url = URL.createObjectURL(blob);
                 setImageUrl(url);
             } catch (error) {

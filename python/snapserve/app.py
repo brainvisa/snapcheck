@@ -17,4 +17,3 @@ config = LeptonConfig(
 app = LeptonApp(config, IOHelper(SnapModel, load_snap, save_snap, new_snap), crud_router_cls=snap.SnapRouter)
 app.include_router(files.router, tags=["files"], prefix="/files")
 app.include_router(content.router, tags=["content"], prefix="/content")
-app.include_router(snap.router, tags=["snap"], prefix="/snap")

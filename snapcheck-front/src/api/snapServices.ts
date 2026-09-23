@@ -21,12 +21,12 @@ export function useSnapServices() {
 
   return {
     // Snap operations
-    openSnap: (path: string) => httpClient.post<SnapModel>('/snap/open', { path }),
+    openSnap: (path: string) => httpClient.get<SnapModel>(`/snap/open/${path}`),
     closeSnap: (snapId: string) => httpClient.post<void>('/snap/close', { snap_id: snapId }),
     saveSnap: (snapId: string) => httpClient.post<SnapModel>('/snap/save', { snap_id: snapId }),
     saveSnapAs: (snapId: string, newPath: string) => httpClient.post<SnapModel>('/snap/save-as', { snap_id: snapId, new_path: newPath }),
-    updateSnapField: (snapId: string, field: string, value: any) => 
-      httpClient.put<UpdateFieldResponse>(`/snap/${snapId}/field`, { field_path: field, value }),
+    updateSnapField: (snapId: string, field: string, value: any) =>
+      httpClient.patch<UpdateFieldResponse>(`/objects/${snapId}/field`, { field_path: field, value }),
     
     // Export operations
     exportAsHtml: (snapId: string, path: string) => httpClient.post<FileResponse>(`/snap/${snapId}/html/${path}`, {}),
@@ -35,7 +35,7 @@ export function useSnapServices() {
     downloadAsPdf: (snapId: string) => httpClient.get<Blob>(`/snap/${snapId}/pdf/download`),
     
     // Image/content operations
-    getSnapImage: (snapId: string, src: string) => `http://localhost:8000/snap/${snapId}/image/${src}`,
+    getSnapImage: (snapId: string, src: string) => httpClient.get<Blob>(`/objects/${snapId}/image/${src}`, { responseType: 'blob' }),
   };
 }
 
