@@ -63,25 +63,26 @@ function SnapCheck() {
     // const { session, openLObject, currentLObjectPath } = useLObjectSession();
     const { showSidebar } = useAppUIState();
     return (
-        <div className='app'>
-            <ShortCuts />
-            <div className='app-topbar'>
-                <TopBar />
-            </div>
-            <div className="page-container">
-                <div className='sidebar-container' style={{ display: showSidebar ? "block" : "none" }}>
-                    <Sidebar />
-                </div>
-                <div className='main-container'>
-                    <div className="board-container">
-                        <MainContent />
-                    </div>
-                    <div className='modal-container'>
-                        <Modal />
-                    </div>
-                </div>
-            </div>
-        </div>
+        // <div className='app'>
+        //     <ShortCuts />
+        //     <div className='app-topbar'>
+        //         <TopBar />
+        //     </div>
+        //     <div className="page-container">
+        //         <div className='sidebar-container' style={{ display: showSidebar ? "block" : "none" }}>
+        //             <Sidebar />
+        //         </div>
+        //         <div className='main-container'>
+        //             <div className="board-container">
+        //                 <MainContent />
+        //             </div>
+        //             <div className='modal-container'>
+        //                 <Modal />
+        //             </div>
+        //         </div>
+        //     </div>
+        // </div>
+        <p>Coucou</p>
     );
 }
 
