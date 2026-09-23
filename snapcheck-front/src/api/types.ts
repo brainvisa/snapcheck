@@ -44,14 +44,15 @@ export interface QualityControlModel {
 }
 
 export interface DirectoryItemModel {
-  name: string;
   path: string;
-  is_dir: boolean;
+  filename: string;
+  isdir: boolean;
 }
 
 export interface DirectoryModel {
   path: string;
-  items?: DirectoryItemModel[];
+  content: DirectoryItemModel[];
+  parent?: string | null;
 }
 
 export interface OpenAPIConfig {
@@ -82,9 +83,9 @@ export const SettingsService = {
 };
 
 export const FilesService = {
-  listDirectory: async (path?: string, extensions?: string[]) => {
+  listDirectory: async (path?: string, extensions?: string[]): Promise<DirectoryModel> => {
     // Will be replaced with useFileServices
-    return { path, items: [] };
+    return { path: '', content: [], parent: null };
   }
 };
 

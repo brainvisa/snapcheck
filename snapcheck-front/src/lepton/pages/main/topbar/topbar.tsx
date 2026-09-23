@@ -1,7 +1,7 @@
 import Menu from "../../../components/lib/menu/menu";
 import ServerContent from "../../../components/lib/serverContent";
 import { useAppData } from "../../../contexts/AppDataContext";
-import { useModal } from "../../../contexts/ModalContext";
+import { useModal } from "@lepton/core/contexts/ModalContext";
 import DebugPage from "../../debug/debug";
 import SettingsPage from "../../settings/settings";
 import { Close, FilterNone, Maximize, Minimize } from "@mui/icons-material";

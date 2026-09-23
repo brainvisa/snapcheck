@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FilesService, type DirectoryItemModel, type DirectoryModel } from '@lepton/api-client';
-
+import { type DirectoryItemModel, type DirectoryModel } from '@lepton/api-client';
+import { useFileServices } from '../../../../api/snapServices';
 
 import './browser.css';
 import { Folder } from '@mui/icons-material';
@@ -17,12 +17,17 @@ const FilesBrowser: React.FC<{
     const [isLoading, setIsLoading] = useState(false);
     const [directory, setDirectory] = useState<DirectoryModel | null>(null);
     const [search, setSearch] = useState("");
+    const fileServices = useFileServices();
 
     useEffect(() => {
         const fetchFiles = async () => {
             setIsLoading(true);
-            const directory = await FilesService.listDirectory(path || undefined, extensions);
-            setDirectory(directory);
+            try {
+                const directory = await fileServices.listDirectory(path || undefined, extensions);
+                setDirectory(directory);
+            } catch (error) {
+                console.error("Error fetching directory:", error);
+            }
             setIsLoading(false);
         };
 
@@ -53,20 +58,19 @@ const FilesBrowser: React.FC<{
     const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Escape') {
             setSearch("");
-            // Optionally prevent further handling
             event.stopPropagation();
         }
     }
 
     const breadcrumbs: JSX.Element[] = [];
     if (path) {
-        const parts = path.split("/").filter(Boolean); // filter removes empty parts
+        const parts = path.split("/").filter(Boolean);
         breadcrumbs.push(<Button className='separator' onClick={() => goto("/")}>/</Button>);
         parts.forEach((part, idx) => {
-            const cumPath = <span className="separator">/</span> + parts.slice(0, idx + 1).join("/");
+            const cumPath = parts.slice(0, idx + 1).join("/");
             breadcrumbs.push(
                 <span key={cumPath}>
-                    <Button onClick={() => goto(cumPath)}>{part}</Button>
+                    <Button onClick={() => goto("/" + cumPath)}>{part}</Button>
                     {idx < parts.length - 1 && <span className="separator">/</span>}
                 </span>
             );

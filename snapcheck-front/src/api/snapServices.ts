@@ -43,10 +43,11 @@ export function useFileServices() {
   const httpClient = useHttpClient();
 
   return {
-    listDirectory: (path?: string, extensions?: string[]) => 
-      httpClient.get(`/files/browse`, { 
-        params: { path, extensions: extensions?.join(',') } 
-      }),
+    listDirectory: (path?: string, extensions?: string[]) => {
+      const url = path ? `/files/${path}` : '/files/';
+      const params = extensions ? { extensions: extensions.join(',') } : {};
+      return httpClient.get(url, { params });
+    },
     getFile: (path: string) => httpClient.get(`/files/${path}`),
   };
 }

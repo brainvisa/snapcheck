@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./modal.css";
 import { Close } from "@mui/icons-material";
-import { useModal } from "../../../contexts/ModalContext";
+import { useModal } from "@lepton/core/contexts/ModalContext";
 
 
 type ModalProps = {
