@@ -1,4 +1,4 @@
-from snapcheck.core.callback import Callback
+from lepton_common.callback import Callback
 
 
 class TestCallback:

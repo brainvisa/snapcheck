@@ -217,8 +217,14 @@ class Snap(LObject):
         makedirs(pdf_dir, exist_ok=True)
         files = []
         for f in sorted(listdir(html_dir)):
+            if not f.endswith(".html"):
+                # Skip non-HTML entries (e.g. the "index" assets directory).
+                continue
+            html_path = op.join(html_dir, f)
+            with open(html_path, "r") as fp:
+                html_string = fp.read()
             pdf_f = op.join(pdf_dir, f.replace(".html", ".pdf"))
-            html_to_pdf(op.join(html_dir, f), pdf_f)
+            html_to_pdf(html_string, pdf_f)
             files.append(pdf_f)
 
         # Merge all board PDFs into a single PDF file
@@ -255,32 +261,40 @@ def new_infered_snap(path: str) -> Snap:
 
 
 def load_snap(path: str) -> Snap:
-    """Load a Snap object from a JSON file"""
+    """Load a Snap object from a .snpk archive.
+
+    A .snpk is a zip containing a JSON file plus its content assets. The extracted
+    content is kept in a TemporaryDirectory referenced by ``snap._dir`` so it lives
+    exactly as long as the Snap is open (and is cleaned up by ``Snap.close()``).
+
+    If ``path`` is not a snap archive at all (e.g. a raw image opened directly),
+    fall back to inferring a snap from that file. Genuine corruption of a snap
+    archive (bad JSON, invalid structure) is raised, not silently swallowed.
+    """
+    tmp_dir = tempfile.TemporaryDirectory(prefix="snapcheck_snap_load_")
     try:
-        tmp_dir = tempfile.TemporaryDirectory(prefix="snapcheck_snap_load_", delete=False)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(tmp_dir.name)
+    except zipfile.BadZipFile:
+        # Not a snap archive: treat the file as raw content to infer a snap from.
+        tmp_dir.cleanup()
+        return new_infered_snap(path)
 
-        # Find the JSON file at the root of the archive
-        json_files = [f for f in listdir(tmp_dir.name) if f.endswith(".json")]
-        if not json_files:
-            raise FileNotFoundError(f"{path} is an invalid Snap. No JSON file found at the root of the archive.")
-        json_path = op.join(tmp_dir.name, json_files[0])
-        js_path = json_path
+    # Find the JSON file at the root of the archive
+    json_files = [f for f in listdir(tmp_dir.name) if f.endswith(".json")]
+    if not json_files:
+        tmp_dir.cleanup()
+        raise FileNotFoundError(f"{path} is an invalid Snap. No JSON file found at the root of the archive.")
 
-        with open(js_path, "r") as f:
-            data = json.load(f)
+    with open(op.join(tmp_dir.name, json_files[0]), "r") as f:
+        data = json.load(f)
 
-        snap = Snap.from_dict(data)
-        snap._filepath = path
-        snap._dir = tmp_dir
+    snap = Snap.from_dict(data)
+    snap._filepath = path
+    snap._dir = tmp_dir
 
-        # Validate the loaded object
-        snap._validate()
-    except Exception as _:
-        # If loading failed, it can be beacause it is not yet a snap file,
-        # If  so, create a new snap with a unique board containing the file
-        snap = new_infered_snap(path)
+    # Validate the loaded object
+    snap._validate()
 
     return snap
 

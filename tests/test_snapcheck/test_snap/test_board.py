@@ -215,6 +215,6 @@ class TestBoard:
         assert rating in ratings
 
     def test_board_is_serializable(self):
-        from snapcheck.core.objects import Serializable
+        from lepton_common.objects import Serializable
         board = Board(title="Test")
         assert isinstance(board, Serializable)

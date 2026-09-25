@@ -4,7 +4,9 @@ from pathlib import Path
 import os.path as op
 import mimetypes
 from lepton.session.controller import CRUDRouter, SessionStore, get_session_from_token
-from tempfile import TemporaryDirectory
+from tempfile import mkdtemp
+import shutil
+from starlette.background import BackgroundTask
 
 from snapcheck.snap.snap import Snap
 
@@ -21,13 +23,8 @@ class SnapRouter(CRUDRouter):
 
     def get_image(self, snap_id: str, src: str, session=Depends(get_session_from_token)):
         from os.path import realpath, commonpath
-        # TODO: check the session ?
-        print(f"DEBUG: get_image called with snap_id={snap_id}, src={src}")
-        print(f"DEBUG: session={session}")
-        print(f"DEBUG: store items: {[item.id for item in session.items]}")
 
         item = self.store.get_by_id(snap_id)
-        print(f"DEBUG: item={item}")
         if item is None:
             raise HTTPException(status_code=404, detail="Snap not found")
 
@@ -74,34 +71,35 @@ class SnapRouter(CRUDRouter):
             raise HTTPException(status_code=404, detail="Snap not found")
         item.object.export_to_pdf(Path(path))
 
-    def download_as_html(self, snap_id: str):
-        """ Export as HTML in a temporary directory, zip and return the path to the zip file """
-        temp_dir = TemporaryDirectory(prefix="snapserve_export_")
+    def download_as_html(self, snap_id: str, session=Depends(get_session_from_token)):
+        """ Export as HTML in a temporary directory, zip it and stream the zip. """
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")
         snap: Snap = item.object
-        export_path = Path(temp_dir.name) / Path(snap._filepath).stem
+        # Keep the directory until the response has been fully sent, then remove it.
+        temp_dir = mkdtemp(prefix="snapserve_export_")
+        export_path = Path(temp_dir) / Path(snap._filepath).stem
         zip_path = snap.export_to_html(export_path, compress=True)
-        print("HTML exported to:", zip_path)
         return FileResponse(
             zip_path,
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{op.basename(zip_path)}"'},
+            background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
         )
 
-    def download_as_pdf(self, snap_id: str):
-        """ Export as PDF in a temporary directory and return the path to the PDF file """
-        temp_dir = TemporaryDirectory(prefix="snapserve_export_")
+    def download_as_pdf(self, snap_id: str, session=Depends(get_session_from_token)):
+        """ Export as PDF in a temporary directory and stream the PDF. """
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")
         snap: Snap = item.object
-        export_path = Path(temp_dir.name) / f"{Path(snap._filepath).stem}.pdf"
+        temp_dir = mkdtemp(prefix="snapserve_export_")
+        export_path = Path(temp_dir) / f"{Path(snap._filepath).stem}.pdf"
         snap.export_to_pdf(export_path)
-        print("PDF exported to:", export_path)
         return FileResponse(
             export_path,
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{op.basename(export_path)}"'},
+            background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
         )

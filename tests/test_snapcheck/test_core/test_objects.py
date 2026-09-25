@@ -1,4 +1,4 @@
-from snapcheck.core.objects import Backupable, Changeable, Serializable
+from lepton_common.objects import Backupable, Changeable, Serializable
 
 
 class TestChangeable:

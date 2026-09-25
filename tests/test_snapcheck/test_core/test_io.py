@@ -1,5 +1,5 @@
 from typing import List
-from snapcheck.core.io import DynamicLoader
+from lepton_common.io import DynamicLoader
 
 
 class SimpleObject:
@@ -12,7 +12,7 @@ class TestDynamicLoader:
 
     def test_load_class_existing(self):
         loader = DynamicLoader()
-        mod = loader.get_module("snapcheck.core.io")
+        mod = loader.get_module("lepton_common.io")
         cls = getattr(mod, "DynamicLoader", None)
         assert mod is not None
         assert cls is not None

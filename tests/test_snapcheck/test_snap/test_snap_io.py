@@ -93,12 +93,16 @@ class TestSnap:
         
         snap = Snap(ratings=[rating1, rating2])
         data = snap.to_dict(compress=True)
-        
-        # Scale should be extracted and referenced
-        assert "_scales" in data
-        assert len(data["_scales"]) == 1
-        assert data["ratings"][0]["scale"].startswith("@._scales#")
-        assert data["ratings"][1]["scale"].startswith("@._scales#")
+
+        # Shared objects are extracted into "_refs" and referenced by "$@<cls>#<idx>".
+        assert "_refs" in data
+        scale_refs = data["_refs"]["snapcheck.snap.rating.RatingScale"]
+        assert len(scale_refs) == 1  # the scale is shared, so stored only once
+        rating_refs = data["_refs"]["snapcheck.snap.rating.Rating"]
+        assert rating_refs[0]["scale"].startswith("$@")
+        assert rating_refs[1]["scale"].startswith("$@")
+        # both ratings point to the same (shared) scale
+        assert rating_refs[0]["scale"] == rating_refs[1]["scale"]
 
     def test_update_rating(self):
         rating = Rating(id="rating1", name="Quality", value=None)
@@ -162,7 +166,7 @@ class TestSnapSaveLoad:
             assert loaded_snap.title == "Test Snap"
             assert loaded_snap.description == "Test description"
             assert loaded_snap.metadata == {"version": "1.0"}
-            assert loaded_snap._path == save_path
+            assert loaded_snap._filepath == save_path
             
             loaded_snap.close()
 
