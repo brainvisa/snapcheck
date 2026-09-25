@@ -174,8 +174,8 @@
         "tags": [
           "objects"
         ],
-        "summary": "Get One By",
-        "operationId": "get_one_by",
+        "summary": "Get One By Attr",
+        "operationId": "get_one_by_attr",
         "security": [
           {
             "HTTPBearer": []
@@ -319,65 +319,7 @@
         }
       }
     },
-    "/objects/update/{path}": {
-      "patch": {
-        "tags": [
-          "objects"
-        ],
-        "summary": "Update Field",
-        "description": "Update a specific field of a snap with version conflict detection.\n\nArgs:\n    snap_id: Snap ID\n    update: Field update request with field_path, value, and optional expected_version\n\nReturns:\n    Lightweight response with version and status\n\nRaises:\n    409: Version conflict (expected_version doesn't match current)\n    404: Snap not found\n    400: Invalid field path",
-        "operationId": "update_field",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "snap_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Snap Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FieldUpdateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExtendedLObject"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/objects/save/{path}": {
+    "/objects/save": {
       "post": {
         "tags": [
           "objects"
@@ -424,7 +366,7 @@
         }
       }
     },
-    "/objects/saveas/{path}": {
+    "/objects/saveas": {
       "post": {
         "tags": [
           "objects"
@@ -480,7 +422,7 @@
         }
       }
     },
-    "/objects/close/{path}": {
+    "/objects/close": {
       "delete": {
         "tags": [
           "objects"
@@ -530,9 +472,9 @@
         "tags": [
           "objects"
         ],
-        "summary": "Update Field",
+        "summary": "Patch Field",
         "description": "Update a specific field of a snap with version conflict detection.\n\nArgs:\n    snap_id: Snap ID\n    update: Field update request with field_path, value, and optional expected_version\n\nReturns:\n    Lightweight response with version and status\n\nRaises:\n    409: Version conflict (expected_version doesn't match current)\n    404: Snap not found\n    400: Invalid field path",
-        "operationId": "update_field",
+        "operationId": "patch_field",
         "security": [
           {
             "HTTPBearer": []
@@ -924,8 +866,8 @@
         "tags": [
           "files"
         ],
-        "summary": "List Directory",
-        "operationId": "list_directory",
+        "summary": "List Root Directory",
+        "operationId": "list_root_directory",
         "security": [
           {
             "HTTPBearer": []
@@ -1350,22 +1292,6 @@
         },
         "type": "object",
         "title": "Element"
-      },
-      "ExtendedLObject": {
-        "properties": {
-          "has_changed": {
-            "type": "boolean",
-            "title": "Has Changed",
-            "default": false
-          },
-          "version": {
-            "type": "integer",
-            "title": "Version",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "ExtendedLObject"
       },
       "FieldUpdateRequest": {
         "properties": {
@@ -2049,6 +1975,11 @@
               }
             ],
             "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 0
           },
           "has_changed": {
             "type": "boolean",

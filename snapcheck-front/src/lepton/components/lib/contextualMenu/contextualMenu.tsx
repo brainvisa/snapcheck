@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, ReactNode, MouseEvent } from 'react';
+import React, { useState, useRef, useEffect, ReactNode } from 'react';
 
 import './contextualMenu.css'
 
@@ -48,7 +48,7 @@ export const ContextualMenu: React.FC<ContextualMenuProps> = ({ items, children,
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleClick = (event: MouseEvent | MouseEventInit) => {
+        const handleClick = () => {
             setVisible(false);
         };
 

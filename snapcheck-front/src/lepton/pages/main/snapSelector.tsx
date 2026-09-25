@@ -1,18 +1,28 @@
+import { useQueries } from "@tanstack/react-query";
 import { useLObjectSession } from "@lepton/core/contexts/SessionContext";
 import TabSelector from "../../components/lib/tabSelector/tabSelector";
-
+import { snapQueryOptions, useCloseSnap } from "@api/snap";
 
 export const SnapSelector: React.FC = () => {
-    const { currentLObjectPath, objects, setCurrentLObject, closeLObject } = useLObjectSession();
+    const { openPaths, currentLObjectPath, setCurrentLObject, closeLObject } = useLObjectSession();
+    const closeSnap = useCloseSnap();
 
-    return (
-        <TabSelector
-            items={Object.entries(objects).filter(([path, snapState]) => snapState.data && snapState.data?.filename).map(([path, snapState]) => ({
-                label: snapState.data?.filename + (snapState.data?.has_changed ? " *" : ""),
-                onSelect: () => { setCurrentLObject(path) },
-                onClose: () => { closeLObject(snapState.data?.id || "") },
-                isActive: path == currentLObjectPath,
-            }))}
-        />
-    );
+    // One query per open tab (useQueries handles a dynamic number of hooks safely).
+    const results = useQueries({ queries: openPaths.map((p) => snapQueryOptions(p)) });
+
+    const items = openPaths.map((path, i) => {
+        const snap = results[i]?.data;
+        const name = snap?.filename ?? path.split("/").pop() ?? path;
+        return {
+            label: name + (snap?.has_changed ? " *" : ""),
+            onSelect: () => setCurrentLObject(path),
+            onClose: () => {
+                if (snap?.id) closeSnap.mutate({ snapId: snap.id, path });
+                closeLObject(path);
+            },
+            isActive: path === currentLObjectPath,
+        };
+    });
+
+    return <TabSelector items={items} />;
 };

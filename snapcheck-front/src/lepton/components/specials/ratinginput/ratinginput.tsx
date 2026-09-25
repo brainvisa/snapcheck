@@ -9,39 +9,36 @@ interface RatingInputProps {
 }
 
 const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }) => {
-    const [selectedValue, setSelectedValue] = useState<number | undefined | null>(rating.value);
+    // The value is driven directly by the cached document (single source of truth):
+    // no local copy, so a change made anywhere (sidebar, board menu) shows up here.
+    const selectedValue = rating.value;
+
+    // The comment is free text: keep a local draft while typing, commit on blur.
     const [comment, setComment] = useState<string>(rating.comment || '');
     const commentInputRef = useRef<HTMLInputElement>(null);
-
-    // const { showModal } = useModal();
-
-    useEffect(() => {
-        setSelectedValue(rating.value);
-    }, [rating.id, rating.value]);
-
+    // Reseed the draft only when switching to another rating.
     useEffect(() => {
         setComment(rating.comment || '');
-    }, [rating.id, rating.comment]);
+    }, [rating.id]);
 
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedValue(Number(event.target.value));
+        const raw = event.target.value;
         if (commentInputRef.current) {
             commentInputRef.current.focus();
         }
         if (onChange) {
-            onChange(rating.id, "value", Number(event.target.value));
+            onChange(rating.id, "value", raw === '' ? null : Number(raw));
         }
     };
 
-    const handleCommentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setComment(event.target.value);
-        if (onChange) {
-            onChange(rating.id, "comment", event.target.value);
+    const commitComment = () => {
+        if (onChange && comment !== (rating.comment || '')) {
+            onChange(rating.id, "comment", comment);
         }
     };
 
     const name = rating.name || 'Unnamed (#' + rating.id + ')';
-    const selectedRatingScale = rating.scale?.ratings.find((nt: RatingScaleItem) => nt.value === selectedValue);
+    const selectedRatingScale = rating.scale?.ratings?.find((nt: RatingScaleItem) => nt.value === selectedValue);
 
     return <div className={`rating-input ${highlight ? ' rating-highlight' : ''}`}>
         <div className="rating-state-bar"></div>
@@ -50,18 +47,12 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
                 <span className="rating-name">{name}</span>
                 <select
                     className="rating-select"
-                    value={(selectedValue == undefined || isNaN(selectedValue)) ? undefined : selectedValue}
+                    value={(selectedValue === undefined || selectedValue === null) ? '' : String(selectedValue)}
                     onChange={handleSelectChange}
-                    onBlur={(event: React.FocusEvent<HTMLSelectElement>) => {
-                        const newValue = Number(event.target.value);
-                        if (newValue !== rating.value) {
-                            onChange?.(rating.id, "value", newValue);
-                        }
-                    }}
                     disabled={rating.scale == undefined}
                     style={(selectedRatingScale && selectedRatingScale.color) ? { backgroundColor: selectedRatingScale.color } : {}}
                 >
-                    <option value={undefined}>
+                    <option value=''>
                         --
                     </option>
                     {rating.scale?.ratings &&
@@ -76,22 +67,14 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
                 </select>
             </div>
             <div className='rating-second-line'>
-                {/* <div className='rating-infos-btn' onClick={()=>showModal(<div><h1>{name}</h1><p>{rating.description}</p></div>)}>
-                    <InfoOutline fontSize='xxsmall' />
-                </div> */}
                 <input
                     type="text"
                     className='rating-comment'
                     ref={commentInputRef}
                     placeholder="No comment"
                     value={comment}
-                    onChange={handleCommentChange}
-                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => {
-                        const newComment = event.target.value;
-                        if (newComment !== rating.comment) {
-                            onChange?.(rating.id, "comment", newComment);
-                        }
-                    }}
+                    onChange={(event) => setComment(event.target.value)}
+                    onBlur={commitComment}
                 />
             </div>
         </div>

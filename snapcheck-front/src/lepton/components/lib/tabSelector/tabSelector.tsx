@@ -20,7 +20,7 @@ const TabSelector: React.FC<TabSelectorProps> = ({ items }) => {
             <ContextualMenu parentClass="tab-selector" items={[{label: "Close"}, {label: "Save"}]} key={index}>
                 <div className={`tab-selector-item ${item.isActive ? 'active' : ''}`} key={item.label} onClick={item.onSelect}>
                     {item.label}
-                    <span className='close-icon' onClick={item.onClose}><Close className='fb-item-icon' fontSize='xsmall' /></span>
+                    <span className='close-icon' onClick={(e) => { e.stopPropagation(); item.onClose?.(); }}><Close className='fb-item-icon' fontSize='small' /></span>
                 </div>
             </ContextualMenu>
         ))}

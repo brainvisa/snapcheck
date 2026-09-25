@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { BoardModel } from "@lepton/api-client";
 import Board from "./board";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
-import Viewer3D from "../../components/elements/viewer3d";
 import { useLObjectSession } from "@lepton/core/contexts/SessionContext";
+import { useSnap } from "@api/snap";
 import "./main.css"
 
 
@@ -30,9 +30,10 @@ const BoardView: React.FC<{ snapId: string, board: BoardModel | null }> = ({ sna
 
 
 const MainContent: React.FC<{}> = () => {
-    // const { snap, setCurrentBoard, currentBoardIndex, currentBoard, session } = useSnapSession();
-    const { currentObject: snap, setLObjectSetting, currentObjectSettings, session } = useLObjectSession();
-    const currentBoardIndex = currentObjectSettings.currentBoard || 0;
+    const { currentLObjectPath, setLObjectSetting, currentObjectSettings } = useLObjectSession();
+    const { data: snap } = useSnap(currentLObjectPath);
+
+    const currentBoardIndex: number = currentObjectSettings.currentBoard || 0;
     const currentBoard = snap?.boards ? snap.boards[currentBoardIndex] : null;
 
     const setCurrentBoard = (index: number) => {
@@ -44,36 +45,37 @@ const MainContent: React.FC<{}> = () => {
             if (event.key === "Tab") {
                 event.preventDefault();
                 if (snap?.boards && snap.boards.length > 0) {
-                    setCurrentBoard((currentObjectSettings.currentBoard + 1) % snap.boards.length);
+                    setCurrentBoard((currentBoardIndex + 1) % snap.boards.length);
                 }
             }
         };
         window.addEventListener("keydown", handleTabKey);
-        return () => {
-            window.removeEventListener("keydown", handleTabKey);
-        };
-    }, [currentObjectSettings.currentBoard, snap, setCurrentBoard]);
+        return () => window.removeEventListener("keydown", handleTabKey);
+    }, [currentBoardIndex, snap]);
 
-    // if (!snap) {
-    //     return <div className="vertical-center">
-    //         <Viewer3D>
-    //         </Viewer3D>
-    //     </div>
-    // }
+    // No document currently open (e.g. after closing the last tab): show nothing,
+    // regardless of any stale query data.
+    if (!currentLObjectPath) {
+        return (
+            <div className="vertical-center">
+                <p className='default-text'>No document open.</p>
+            </div>
+        );
+    }
 
     return (
         <div>
             <div className="main-header">
                 {
-                    snap?.boards?.length && (
+                    snap?.boards?.length ? (
                         <ul className='board-list'>
-                            {snap.boards.map((board: BoardModel, index) => (
+                            {snap.boards.map((board: BoardModel, index: number) => (
                                 <li key={index} onClick={() => setCurrentBoard(index)} className={currentBoardIndex === index ? 'active' : ''}>
                                     {board.title}
                                 </li>
                             ))}
                         </ul>
-                    )
+                    ) : null
                 }
                 <span>{snap?.title}</span>
             </div>

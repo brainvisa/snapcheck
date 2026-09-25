@@ -1,38 +1,33 @@
 import Menu from "../../../components/lib/menu/menu";
 import ServerContent from "../../../components/lib/serverContent";
-import { useAppData } from "../../../contexts/AppDataContext";
 import { useModal } from "@lepton/core/contexts/ModalContext";
-import DebugPage from "../../debug/debug";
-import SettingsPage from "../../settings/settings";
 import { Close, FilterNone, Maximize, Minimize } from "@mui/icons-material";
 import { SnapSelector } from "../snapSelector";
 import { useEffect, useRef } from "react";
 import "./topbar.css";
 import { useAppUIState } from "../../../../contexts/AppUIStateContext";
 import { useLObjectSession } from "@lepton/core/contexts/SessionContext";
-import { ObjectsService } from '@lepton/api-client';
-import FilesBrowser from "../../../components/files/browser/browser";
+import { useSnap, useSaveSnap, useSaveSnapAs } from "@api/snap";
+import { exportAsHtml } from "@lepton/api";
 import ExportHTMLPage from "../../exportHTML/exportHTML";
 
 // Declare missing globals and types
 declare const QWebChannel: any;
 
 
-const TopBar: React.FC<{
-}> = () => {
+const TopBar: React.FC<{}> = () => {
     const { showModal } = useModal();
-    // const { history } = useAppData();
     const { showSidebar, setState } = useAppUIState();
-    const { currentObject: snap, saveLObject, saveLObjectAs, openLObject } = useLObjectSession();
+    const { currentLObjectPath, openLObject } = useLObjectSession();
+    const { data: snap } = useSnap(currentLObjectPath);
+    const saveSnap = useSaveSnap();
+    const saveSnapAs = useSaveSnapAs();
 
-    // Variables pour gérer le double-clic
     const dragTimer = useRef<number | null>(null);
     const isDragDelayed = useRef(false);
 
-    // Gérer les événements globaux de mouse up
     useEffect(() => {
         const handleGlobalMouseUp = () => {
-            // Annuler le drag delayed s'il y en a un
             if (dragTimer.current) {
                 clearTimeout(dragTimer.current);
                 dragTimer.current = null;
@@ -40,13 +35,9 @@ const TopBar: React.FC<{
             }
             stopWindowDrag();
         };
-
         document.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => {
-            document.removeEventListener('mouseup', handleGlobalMouseUp);
-        };
+        return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
-
 
     const openFile = () => {
         const input = document.createElement("input");
@@ -54,80 +45,31 @@ const TopBar: React.FC<{
         input.onchange = (e: any) => {
             const file = e.target.files?.[0];
             if (file) {
-                // Traitez le fichier ici, par exemple :
-                // const reader = new FileReader();
-                // reader.onload = (event) => { ... };
-                // reader.readAsText(file);
-                console.log("user selected:", file.path, file)
                 openLObject(file.path);
             }
         };
         input.click();
     }
 
-    const close = () => {
+    const withBridge = (fn: (bridge: any) => void) => {
         if (typeof window !== "undefined" && (window as any).qt) {
             new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
                 (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.close();
-            });
-        }
-    }
-    const maximize = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.maximize();
-            });
-        }
-    }
-    const minimize = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.minimize();
-            });
-        }
-    }
-    const restore = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.restore();
-            });
-        }
-    }
-    const toggleWindowSize = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.toggleWindowSize();
-            });
-        }
-    }
-
-    const startWindowDragDelayed = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.startWindowDrag();
+                fn((window as any).bridge);
             });
         }
     };
 
-    const stopWindowDrag = () => {
-        if (typeof window !== "undefined" && (window as any).qt) {
-            new QWebChannel((window as any).qt.webChannelTransport, function (channel: any) {
-                (window as any).bridge = channel.objects.bridge;
-                (window as any).bridge.stopWindowDrag();
-            });
-        }
-    };
+    const close = () => withBridge((b) => b.close());
+    const maximize = () => withBridge((b) => b.maximize());
+    const minimize = () => withBridge((b) => b.minimize());
+    const restore = () => withBridge((b) => b.restore());
+    const toggleWindowSize = () => withBridge((b) => b.toggleWindowSize());
+    const startWindowDragDelayed = () => withBridge((b) => b.startWindowDrag());
+    const stopWindowDrag = () => withBridge((b) => b.stopWindowDrag());
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        // Start window drag only if clicking directly on the topbar (not its children)
         if (e.currentTarget === e.target && e.button === 0) {
-            // Délai de 200ms pour permettre la détection du double-clic
             dragTimer.current = window.setTimeout(() => {
                 startWindowDragDelayed();
                 isDragDelayed.current = true;
@@ -136,58 +78,29 @@ const TopBar: React.FC<{
     };
 
     const handleDoubleClick = (e: React.MouseEvent) => {
-        // Si c'est un double-clic, annuler le drag et faire l'action de double-clic
         if (e.currentTarget === e.target) {
             if (dragTimer.current) {
                 clearTimeout(dragTimer.current);
                 dragTimer.current = null;
                 isDragDelayed.current = false;
             }
-            // Action de double-clic : toggle maximize/restore
             toggleWindowSize();
         }
     };
 
     const exportToHTML = () => {
         if (!snap || !snap.id) return;
-        //     ObjectsService.exportAsHtml(snap.id).then((zip_file) => {
-        //         const zipBlob = new Blob([zip_file], { type: "application/zip" });
-        //         const url = window.URL.createObjectURL(zipBlob);
-        //         const zipDownload = document.createElement("a");
-
-        //         zipDownload.href = url;
-        //         zipDownload.download = `${snap.title || 'export'}.zip`;
-        //         document.body.appendChild(zipDownload);
-        //         zipDownload.click();
-        showModal(<ExportHTMLPage onSubmit={(path: string) => {
-            if (!snap || !snap.id) return "No snap to export.";
-            return ObjectsService.exportAsHtml(snap.id, path).then((result) => {
-                if (result.success) {
-                    return false; // No error
-                } else {
-                    return result.error || "An error occurred while exporting.";
-                }
-            }).catch((error) => {
+        const snapId = snap.id;
+        showModal(<ExportHTMLPage onSubmit={async (path: string) => {
+            try {
+                await exportAsHtml({ path: { snap_id: snapId, path }, throwOnError: true });
+                return false; // no error
+            } catch (error) {
                 console.error("Export failed:", error);
                 return "An error occurred while exporting.";
-            });
+            }
         }} />);
     }
-
-    const exportToPDF = () => {
-        if (!snap || !snap.id) return;
-        ObjectsService.exportAsPdf(snap.id).then((zip_file) => {
-            const zipBlob = new Blob([zip_file], { type: "application/pdf" });
-            const url = window.URL.createObjectURL(zipBlob);
-            const zipDownload = document.createElement("a");
-
-            zipDownload.href = url;
-            zipDownload.download = `${snap.title || 'export'}.pdf`;
-            document.body.appendChild(zipDownload);
-            zipDownload.click();
-        });
-    }
-
 
     return <div className="topbar"
         onMouseDown={handleMouseDown}
@@ -199,46 +112,26 @@ const TopBar: React.FC<{
                 {
                     label: "File", children: [
                         { label: "Open file...", onClick: openFile },
-                        // {
-                        //     label: "Open recent...",
-                        //     children: history && history.length > 0
-                        //         ? history.map(file => ({
-                        //             label: file.length > 20 ? `...${file.slice(-20)}` : file,
-                        //             onClick: () => openSnap(file)
-                        //         }))
-                        //         : [{ label: "No recent files", disabled: true }]
-                        // },
                         { type: "separator" },
-                        // { label: "Reload", onClick: openSnap, disabled: !snap },
-                        { label: "Save", onClick: () => { snap?.id && saveLObject(snap.id) }, disabled: !snap?.has_changed },
-                        { label: "Save As...", onClick: () => { snap?.id && saveLObjectAs(snap.id, "newPath") }, disabled: !snap?.has_changed },
-                        // { label: "Close", onClick: closeCurrentSnap, disabled: !snap },
-                        // { label: "Close All", onClick: () => { }, disabled: !snap },
+                        { label: "Save", onClick: () => { snap?.id && saveSnap.mutate({ snapId: snap.id, path: currentLObjectPath! }) }, disabled: !snap?.has_changed },
+                        { label: "Save As...", onClick: () => { if (snap?.id) { const p = prompt("Enter the save path:"); if (p) saveSnapAs.mutate({ snapId: snap.id, newPath: p }); } }, disabled: !snap?.id },
                         { type: "separator" },
-                        // { label: "Export to PDF", onClick: () => { snap?.id && ObjectsService.exportAsPdf(snap.id) }, disabled: !snap },
                         { label: "Export to HTML", onClick: exportToHTML, disabled: !snap },
-                        // { type: "separator" },
-                        // { label: "Settings...", onClick: () => { showModal(<SettingsPage />) } },
                         { type: "separator" },
                         { label: "Quit", onClick: close }
                     ]
                 },
                 {
-                    label: "Edit", children: [
-                        // { label: "Cancel", onClick: () => { }, disabled: !snap?.is_cancellable },
-                        // { label: "Redo", onClick: () => { }, disabled: !snap?.is_redoable }
-                    ]
+                    label: "Edit", children: []
                 },
                 {
                     label: "View", children: [
                         { label: "Show Sidebar", onClick: () => setState({ showSidebar: !showSidebar }), checked: showSidebar },
-                        // { label: "Sync boards", onClick: toggleSyncBoards, disabled: !snap || !currentBoard }
                     ]
                 },
                 {
                     label: "More", children: [
                         { label: "About", onClick: () => { showModal(<ServerContent path="about.html" />) } },
-                        // { label: "Debug", onClick: () => { showModal(<DebugPage />) } },
                     ]
                 },
             ]} />

@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/{path:path}", response_model=DirectoryModel)
-@router.get("/", response_model=DirectoryModel)
+@router.get("/", response_model=DirectoryModel, name="list_root_directory")
 def list_directory(path: str = None, extensions: List[str]|None = None, session=Depends(get_session_from_token), app=Depends(get_lepton_app)):
     if path is None:
         path = app.settings.get("files.default_path").value

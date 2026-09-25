@@ -14,6 +14,7 @@ export default defineConfig({
       // Temporarily keep stub API types until client is generated
       '@lepton/api-client': path.resolve(__dirname, 'snapcheck-front/src/api/types.ts'),
       '@lepton/api': path.resolve(__dirname, 'src/api/generated'),
+      '@api': path.resolve(__dirname, 'src/api'),
     },
   },
   optimizeDeps: {

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import FilesBrowser from "../../components/files/browser/browser";
+import { useModal } from "@lepton/core/contexts/ModalContext";
 
-
-const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => string | boolean }> = ({ onSubmit }) => {
+const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => Promise<string | boolean> | string | boolean }> = ({ onSubmit }) => {
     const [currentPath, setCurrentPath] = useState<string>("");
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const { hideModal } = useModal();
 
-    const submit = () => {
-        const res = onSubmit(currentPath)
+    const submit = async () => {
+        const res = await onSubmit(currentPath);
         if (!res) hideModal();
         else {
             setErrorMsg(typeof res === "string" ? res : "An error occurred while exporting.");
@@ -21,7 +22,6 @@ const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => string | boolean }>
         <FilesBrowser
             path={currentPath}
             onPathChange={(p) => setCurrentPath(p || "")}
-            // onFileSelect={(path: string) => submit()}
             extensions={[".snpk"]}
         />
         {errorMsg && <p className="error-message">{errorMsg}</p>}
@@ -30,7 +30,3 @@ const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => string | boolean }>
 }
 
 export default ExportHTMLPage;
-
-function hideModal() {
-    throw new Error("Function not implemented.");
-}

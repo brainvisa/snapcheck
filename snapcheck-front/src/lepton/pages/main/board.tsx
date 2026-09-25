@@ -2,6 +2,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import type { BoardModel } from '@lepton/api-client';
 import { ContextualMenu } from '../../components/lib/contextualMenu/contextualMenu';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
+import { usePatchField } from '@api/snap';
 
 
 const DefaultElementComponent = React.lazy(() => import('../../components/elements/default'));
@@ -36,14 +37,7 @@ const renderElement = (snapId: string, element: any) => {
                     <ImageElementComponent snapId={snapId} src={element.src} style={element.style} />
                 </Suspense>
             );
-        //   case '3d':
-        //     return (
-        //       <Suspense fallback={<div>Loading...</div>}>
-        //         <ThreeDComponent src={src} style={style} />
-        //       </Suspense>
-        //     );
         case "row":
-            // TODO: use style from element
             return <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', ...element.style }}>
                 {element.content?.map((child: any, index: number) => (
                     <div key={index} style={{ marginRight: index < element.content.length - 1 ? '8px' : '0' }}>
@@ -60,18 +54,19 @@ const renderElement = (snapId: string, element: any) => {
 
 
 const BoardElement: React.FC<{ snapId: string, board: BoardModel, element: any }> = ({ snapId, board, element }) => {
-    const { updateFieldDebounced } = useLObjectSession();
+    const { currentLObjectPath } = useLObjectSession();
+    const patchField = usePatchField(currentLObjectPath, snapId);
 
-    const allIntendedRatings = board.elements?.flatMap(el => el.intended_ratings || []) || [];
+    const allIntendedRatings = board.elements?.flatMap((el: any) => el.intended_ratings || []) || [];
 
     const menuItems: any[] = [
         { label: "Show this board in all files", onClick: () => console.log('Show this board in all views clicked') },
-        ...allIntendedRatings.map(rating => ({
+        ...allIntendedRatings.map((rating: any) => ({
             label: rating.name,
             items: [
-                ...(rating.scale?.ratings?.map((rate, index) => ({
+                ...(rating.scale?.ratings?.map((rate: any) => ({
                     label: rate.name,
-                    onClick: () => updateFieldDebounced(snapId, `ratings.{id:${rating.id}}.value`, rate.value),
+                    onClick: () => patchField.mutate({ fieldPath: `ratings.{id:${rating.id}}.value`, value: rate.value }),
                     style: { backgroundColor: rate.color || "" }
                 })) || []),
                 { label: "Comment", onClick: () => console.log('Comment clicked') },

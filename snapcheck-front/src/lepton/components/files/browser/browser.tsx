@@ -14,7 +14,7 @@ const FilesBrowser: React.FC<{
     onFileSelect?: (file: string) => void;
     onPathChange?: (path: string | null) => void;
 }> = ({ path, extensions, onFileSelect, onPathChange }) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false);
     const [directory, setDirectory] = useState<DirectoryModel | null>(null);
     const [search, setSearch] = useState("");
     const fileServices = useFileServices();
@@ -87,7 +87,7 @@ const FilesBrowser: React.FC<{
             directory && (
                 <ul className="files-browser-items">
                     {directory.parent != undefined && directory.parent != null && (
-                        <li onClick={() => goto(directory.parent)}>
+                        <li onClick={() => goto(directory.parent ?? null)}>
                             ..
                         </li>
                     )}

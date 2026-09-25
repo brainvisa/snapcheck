@@ -1,107 +1,27 @@
-// Snapcheck-specific types
-// Replaces @lepton/api-client imports
+// Back-compat type shim for legacy `@lepton/api-client` type imports.
+// Real types now come from the generated hey-api client. Runtime call sites
+// use the generated SDK / TanStack hooks in src/api/*, not this file.
+export type {
+  SnapModel,
+  BoardModel,
+  Rating,
+  RatingScale,
+  RatingScaleItem,
+  DirectoryModel,
+  DirectoryItemModel,
+  SettingsGroupModel,
+  ObjectShortModel,
+} from '../../../src/api/generated/types.gen';
 
-import type { ObjectShortModel } from '@lepton/core/api/types';
+import type { Rating, RatingScaleItem } from '../../../src/api/generated/types.gen';
 
-export interface SnapModel extends ObjectShortModel {
-  id: string;
-  name?: string;
-  path?: string;
-  content?: any;
-  metadata?: Record<string, any>;
-  has_changed?: boolean;
-  version?: number;
-}
+// Legacy aliases kept so existing imports keep resolving.
+export type RatingModel = Rating;
+export type NoteScaleItem = RatingScaleItem;
 
-export interface BoardModel {
-  id: string;
-  name?: string;
-  boards?: any[];
-}
-
-export interface RatingModel {
-  id?: string;
-  value?: number;
-  scale?: number;
-}
-
-export interface RatingScaleItem {
-  id: string | number;
-  label: string;
-  value: number;
-}
-
-export interface NoteScaleItem {
-  id: string | number;
-  label: string;
-  value: number;
-}
-
+// Only used by the (currently unmounted) NoteStatBar component.
 export interface QualityControlModel {
   id: string;
   name?: string;
-  ratings?: RatingModel[];
+  notes?: Array<{ value?: number | null }>;
 }
-
-export interface DirectoryItemModel {
-  path: string;
-  filename: string;
-  isdir: boolean;
-}
-
-export interface DirectoryModel {
-  path: string;
-  content: DirectoryItemModel[];
-  parent?: string | null;
-}
-
-export interface OpenAPIConfig {
-  BASE: string;
-  VERSION: string;
-  WITH_CREDENTIALS: boolean;
-  CREDENTIALS: string;
-  TOKEN?: string;
-  HEADERS?: Record<string, string>;
-}
-
-// OpenAPI config object (replaces @lepton/api-client OpenAPI)
-export const OpenAPI: OpenAPIConfig = {
-  BASE: 'http://localhost:8050',
-  VERSION: '1.0.0',
-  WITH_CREDENTIALS: false,
-  CREDENTIALS: 'include',
-  TOKEN: undefined,
-  HEADERS: undefined,
-};
-
-// Service adapters
-export const SettingsService = {
-  getAllSettings: async () => {
-    // This will be implemented via useSettingsContext
-    return {};
-  }
-};
-
-export const FilesService = {
-  listDirectory: async (path?: string, extensions?: string[]): Promise<DirectoryModel> => {
-    // Will be replaced with useFileServices
-    return { path: '', content: [], parent: null };
-  }
-};
-
-export const ContentService = {
-  getStaticContent: async (path: string) => {
-    // Will be replaced with useContentServices
-    return { content: '' };
-  }
-};
-
-export const ObjectsService = {
-  open: async (path: string) => ({} as SnapModel),
-  close: async (path: string) => {},
-  save: async (snapId: string) => ({} as SnapModel),
-  saveAs: async (objectId: string, newPath: string) => ({} as SnapModel),
-  exportAsHtml: async (snapId: string, path: string) => ({ success: true }),
-  exportAsPdf: async (snapId: string, path: string) => ({ success: true }),
-  updateField: async (snapId: string, data: any) => ({ version: 0, has_changed: false }),
-};

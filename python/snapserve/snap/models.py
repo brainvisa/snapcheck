@@ -20,6 +20,7 @@ class SnapModel(BaseModel):
     boards: List[BoardModel] = []
 
     id: str | None = None
+    version: int = 0
     has_changed: bool = False
     filename: str | None = None
     is_cancellable: bool = False

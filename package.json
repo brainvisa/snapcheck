@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
-    "build_api": "npx @hey-api/openapi-ts --input ./openapi.json --output ./src/api/generated --client axios"
+    "build_api": "python scripts/export_openapi.py && npx @hey-api/openapi-ts",
+    "export_openapi": "python scripts/export_openapi.py"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@hey-api/client-axios": "^0.9.1",
     "@lepton/core": "../lepton/dist",
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
@@ -26,7 +28,7 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.48.0",
+    "@hey-api/openapi-ts": "^0.99.0",
     "@vitejs/plugin-react": "^4.5.1",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",

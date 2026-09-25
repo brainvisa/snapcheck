@@ -2,68 +2,67 @@ import Sidebar from './lepton/pages/main/sidebar/sidebar';
 import MainContent from './lepton/pages/main/main';
 import Modal from './lepton/components/lib/modal/modal';
 import TopBar from './lepton/pages/main/topbar/topbar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
-import { ModalProvider } from '@lepton/core/contexts/ModalContext';
 import { useAppUIState } from './contexts/AppUIStateContext';
+import { ApiTokenSync } from '@api/ApiTokenSync';
+import { useSnap, useSaveSnap, useSaveSnapAs, useCloseSnap } from '@api/snap';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './Snapcheck.css'
 
 
-const ShortCuts: React.FC<{
-}> = () => {
+const ShortCuts: React.FC<{}> = () => {
     const { showSidebar, setState } = useAppUIState();
-    const { saveLObject, saveLObjectAs, currentObject, closeLObject } = useLObjectSession();
+    const { currentLObjectPath, closeLObject } = useLObjectSession();
+    const { data: snap } = useSnap(currentLObjectPath);
+    const saveSnap = useSaveSnap();
+    const saveSnapAs = useSaveSnapAs();
+    const closeSnap = useCloseSnap();
+
+    // Keep the latest values in a ref so the (mount-once) listener never sees stale state.
+    const latest = useRef({ snap, showSidebar, currentLObjectPath });
+    latest.current = { snap, showSidebar, currentLObjectPath };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // ctrl+b toggle sidebar
-            if (e.ctrlKey && e.key.toLowerCase() === "b") {
+            if (!e.ctrlKey) return;
+            const key = e.key.toLowerCase();
+            const { snap, showSidebar, currentLObjectPath } = latest.current;
+
+            if (key === "b") {
                 e.preventDefault();
                 setState({ showSidebar: !showSidebar });
-            }
-
-            // ctrl+s to save snap
-            if (e.ctrlKey && e.key.toLowerCase() === "s") {
+            } else if (key === "s" && e.shiftKey) {
                 e.preventDefault();
-                if (currentObject && currentObject.id) {
-                    saveLObject(currentObject.id);
+                if (snap?.id) {
+                    const newPath = prompt("Enter the save path:");
+                    if (newPath) saveSnapAs.mutate({ snapId: snap.id, newPath });
                 }
-            }
-
-            // ctrl+shift+s to save snap as
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+            } else if (key === "s") {
                 e.preventDefault();
-                if (currentObject && currentObject.id) {
-                    const newName = prompt("Enter the save path:");
-                    if (newName) {
-                        saveLObjectAs(currentObject.id, newName);
-                    }
-                }
-            }
-
-            // ctrl+w to close snap
-            if (e.ctrlKey && e.key.toLowerCase() === "w") {
+                if (snap?.id && currentLObjectPath) saveSnap.mutate({ snapId: snap.id, path: currentLObjectPath });
+            } else if (key === "w") {
                 e.preventDefault();
-                if (currentObject && currentObject.id) {
-                    const confirmClose = confirm("Are you sure you want to close the snap? Unsaved changes will be lost.");
-                    if (confirmClose) {
-                        closeLObject(currentObject.id);
+                if (snap?.id && currentLObjectPath) {
+                    if (confirm("Are you sure you want to close the snap? Unsaved changes will be lost.")) {
+                        closeSnap.mutate({ snapId: snap.id, path: currentLObjectPath });
+                        closeLObject(currentLObjectPath);
                     }
                 }
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [showSidebar]);
+    }, [setState, closeLObject, saveSnap, saveSnapAs, closeSnap]);
 
     return <></>
 }
 
 function SnapCheck() {
-    // const { session, openLObject, currentLObjectPath } = useLObjectSession();
     const { showSidebar } = useAppUIState();
     return (
         <div className='app'>
+            <ApiTokenSync />
             <ShortCuts />
             <div className='app-topbar'>
                 <TopBar />
@@ -81,6 +80,7 @@ function SnapCheck() {
                     </div>
                 </div>
             </div>
+            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </div>
     );
 }

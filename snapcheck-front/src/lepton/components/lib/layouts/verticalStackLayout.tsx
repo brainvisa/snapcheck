@@ -164,7 +164,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
         const weights = sections.map((section) => section.initialSize ?? 1);
         const totalWeight = weights.reduce((acc, value) => acc + value, 0) || sections.length;
 
-        const pixels = sections.map((section, index) => {
+        const pixels = sections.map((_section, index) => {
             const weightRatio = weights[index] / totalWeight;
             return minHeights[index] + extra * weightRatio;
         });

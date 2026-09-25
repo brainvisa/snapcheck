@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import "./menu.css";
 
-type MenuItem = {
+type MenuItemAction = {
+    type?: "item";
     label: string;
     onClick?: () => void;
     disabled?: boolean;
+    checked?: boolean;
     children?: MenuItem[];
-}| {
+};
+type MenuItemSeparator = {
     type: "separator";
 };
+type MenuItem = MenuItemAction | MenuItemSeparator;
 
 
 const SubMenu: React.FC<{
@@ -59,6 +63,9 @@ const Menu: React.FC<MenuProps> = ({ items }) => {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     const childs = items.map((item, idx) => (
+        item.type === "separator" ? (
+            <div key={`sep-${idx}`} className="menu-separator" />
+        ) :
         <div
             key={idx}
             className={"menu-item" + (openIndex === idx ? " open" : "")}

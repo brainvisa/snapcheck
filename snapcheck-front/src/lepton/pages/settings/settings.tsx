@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import "./settings.css"
 import { useSettings } from "../../contexts/SettingsContext";
 
@@ -17,7 +16,7 @@ const SettingsPage: React.FC<{}> = () => {
                     <tr key={setting.id}>
                         <th>{setting.label}</th>
                         <td>
-                            <input type="text" value={setting.value || ""} />
+                            <input type="text" value={String(setting.value ?? "")} />
                         </td>
                     </tr>
                 ))}
