@@ -24,4 +24,4 @@ node_modules/
 package-lock.json
 dist/
 
-snapcheck-front/src/lepton/api-client
+snapcheck-front/src/lepton/api-clientsrc/api/generated/

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build_api": "python ../lepton/scripts/build_api.py ./python/snapserve/__main__.py:app ."
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "build_api": "npx @hey-api/openapi-ts --input ./openapi.json --output ./src/api/generated --client axios"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -24,8 +26,8 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.48.0",
     "@vitejs/plugin-react": "^4.5.1",
-    "openapi-typescript-codegen": "^0.29.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
     "vite": "^6.3.5"
