@@ -20,6 +20,7 @@ class SnapRouter(CRUDRouter):
 
 
     def get_image(self, snap_id: str, src: str, session=Depends(get_session_from_token)):
+        from os.path import realpath, commonpath
         # TODO: check the session ?
         print(f"DEBUG: get_image called with snap_id={snap_id}, src={src}")
         print(f"DEBUG: session={session}")
@@ -30,7 +31,6 @@ class SnapRouter(CRUDRouter):
         if item is None:
             raise HTTPException(status_code=404, detail="Snap not found")
 
-        # Reject missing src to avoid serving the directory itself
         normalized_src = src.lstrip("/")
         if not normalized_src:
             raise HTTPException(status_code=404, detail="Image not found")
@@ -38,19 +38,29 @@ class SnapRouter(CRUDRouter):
         if item.object._dir:
             image_path = op.join(item.object._dir.name, normalized_src)
         else:
-            # If the snap is not saved yet
             image_path = src
-        if not op.isfile(image_path):
+
+        try:
+            image_path_real = realpath(image_path)
+            if item.object._dir:
+                base_path_real = realpath(item.object._dir.name)
+                if commonpath([image_path_real, base_path_real]) != base_path_real:
+                    raise HTTPException(status_code=403, detail="Access denied")
+        except (ValueError, OSError):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        if not op.isfile(image_path_real):
             raise HTTPException(status_code=404, detail="Image not found")
 
-        mime_type, _ = mimetypes.guess_type(image_path)
+        mime_type, _ = mimetypes.guess_type(image_path_real)
         if mime_type is None:
             mime_type = "application/octet-stream"
         return FileResponse(
-            image_path,
+            image_path_real,
             media_type=mime_type,
-            headers={"Content-Disposition": f'inline; filename="{op.basename(image_path)}"'},
+            headers={"Content-Disposition": f'inline; filename="{op.basename(image_path_real)}"'},
         )
+
 
     def export_as_html(self, snap_id: str, path: str):
         item = self.store.get_by_id(snap_id)

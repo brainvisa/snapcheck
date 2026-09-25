@@ -29,11 +29,14 @@ def prettify_html(html_string: str) -> str:
 
 @dataclass
 class Snap(LObject):
+    """
+        A Snap represents a collection of boards, ratings, and associated metadata.
+    """
     title: str | None = None
     description: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    ratings: List[Rating] = field(default_factory=list)
-    boards: List[Board] = field(default_factory=list)
+    ratings: list[Rating] = field(default_factory=list)
+    boards: list[Board] = field(default_factory=list)
     global_comment: str = ""
 
     _dir: tempfile.TemporaryDirectory | None = None
@@ -88,7 +91,7 @@ class Snap(LObject):
         )
         return super().to_json()
 
-    def save(self, path: str = None):
+    def save(self, path: str|None = None):
         # By default keep the same path
         if path is None:
             if self._filepath is None:
@@ -121,7 +124,7 @@ class Snap(LObject):
         # Compress all together
         # TODO: make directly the archive with the proper name
         # Create the archive directly with the desired file name and extension
-        base_name, ext = op.splitext(path)
+        base_name, _ = op.splitext(path)
         archive_path = shutil.make_archive(base_name=base_name, format="zip", root_dir=tmp_dir.name)
         # If the extension is not .snap, rename the archive
         rename(archive_path, path)
@@ -150,8 +153,8 @@ class Snap(LObject):
         makedirs(save_path, exist_ok=True)
 
         # Generate boards HTML scripts
-        boards = list(board.to_html() for board in self.boards)
-        board_links = list(op.join(save_path, f"board_{b}.html") for b in range(len(self.boards)))
+        boards = [board.to_html() for board in self.boards]
+        board_links = [op.join(save_path, f"board_{b}.html") for b in range(len(self.boards))]
 
             # Save each board
         for b, board in enumerate(self.boards):
@@ -234,8 +237,7 @@ def new_infered_snap(path: str) -> Snap:
     if any(path.lower().endswith(ext) for ext in image_extensions):
         el = ImageElement(src=path)
     else:
-        raise IOError(f"File format not supported for Snap creation: {path}")
-        # el = FileElement(src=path)
+        raise OSError(f"File format not supported for Snap creation: {path}")
 
     board = Board(
         title="Board 1",
@@ -275,7 +277,7 @@ def load_snap(path: str) -> Snap:
 
         # Validate the loaded object
         snap._validate()
-    except Exception as e:
+    except Exception as _:
         # If loading failed, it can be beacause it is not yet a snap file,
         # If  so, create a new snap with a unique board containing the file
         snap = new_infered_snap(path)
