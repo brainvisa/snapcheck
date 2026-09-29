@@ -1,4 +1,19 @@
-from snapcheck.snap.snap import Snap, load_snap, save_snap, new_snap
 from snapcheck.snap.board import Board
-from snapcheck.snap.elements import AbstractElement, Element, RowElement, FileElement, ImageElement
+from snapcheck.snap.elements import AbstractElement, Element, FileElement, ImageElement, RowElement
 from snapcheck.snap.rating import Rating, RatingScale
+from snapcheck.snap.snap import Snap, load_snap, new_snap, save_snap
+
+__all__ = [
+    "AbstractElement",
+    "Board",
+    "Element",
+    "FileElement",
+    "ImageElement",
+    "Rating",
+    "RatingScale",
+    "RowElement",
+    "Snap",
+    "load_snap",
+    "new_snap",
+    "save_snap",
+]

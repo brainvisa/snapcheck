@@ -30,12 +30,8 @@ generic_scale = RatingScale(
     description="Generic Scale",
     ratings=[
         RatingScaleItem(name="Bad", value=0, description="Too bad data", color="red"),
-        RatingScaleItem(
-            name="Ok", value=1, description="Good enough data", color="lightgreen"
-        ),
-        RatingScaleItem(
-            name="Excellent", value=2, description="Outstanding sample", color="green"
-        ),
+        RatingScaleItem(name="Ok", value=1, description="Good enough data", color="lightgreen"),
+        RatingScaleItem(name="Excellent", value=2, description="Outstanding sample", color="green"),
     ],
 )
 ```

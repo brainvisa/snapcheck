@@ -1,14 +1,14 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
 import os.path as op
-from os.path import realpath, commonpath
+from os.path import commonpath, realpath
 
-from snapserve.content.models import ContentModel
+from fastapi import APIRouter, Depends, HTTPException
 from lepton.session.controller import get_session_from_token
+from snapserve.content.models import ContentModel
 
 CONTENT_DIR = op.abspath(op.join(op.dirname(__file__), "static"))
 
 router = APIRouter()
+
 
 @router.get("/{path:path}", response_model=ContentModel)
 def get_static_content(path: str, session=Depends(get_session_from_token)) -> ContentModel:
@@ -28,4 +28,3 @@ def get_static_content(path: str, session=Depends(get_session_from_token)) -> Co
         return ContentModel(path=path, content=content)
     except (ValueError, OSError):
         raise HTTPException(status_code=403, detail="Access denied")
-

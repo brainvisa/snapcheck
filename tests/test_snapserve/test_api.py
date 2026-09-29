@@ -1,13 +1,13 @@
 """End-to-end API tests for the SnapServe backend (security + object lifecycle)."""
-import tempfile
+
 import os.path as op
+import tempfile
 
 import pytest
 from fastapi.testclient import TestClient
-
-from snapserve.app import app as lepton_app
-from snapcheck.snap.snap import Snap, Board
 from snapcheck.snap.rating import Rating, RatingScale, RatingScaleItem
+from snapcheck.snap.snap import Board, Snap
+from snapserve.app import app as lepton_app
 
 
 @pytest.fixture()
@@ -102,9 +102,13 @@ class TestObjectLifecycle:
         snap = client.get(f"/objects/open/{snap_path}", headers=auth).json()
         sid, rid = snap["id"], snap["ratings"][0]["id"]
         field = f"ratings.{{id:{rid}}}.value"
-        v1 = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1}).json()["version"]
+        v1 = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1}).json()[
+            "version"
+        ]
         # same value again -> no change -> version stays
-        v2 = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1}).json()["version"]
+        v2 = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1}).json()[
+            "version"
+        ]
         assert v2 == v1
 
 
@@ -114,8 +118,9 @@ class TestSessionIsolation:
         h1 = {"Authorization": f"Bearer {client.post('/session/').json()}"}
         s1 = client.get(f"/objects/open/{snap_path}", headers=h1).json()
         id1, rid = s1["id"], s1["ratings"][0]["id"]
-        client.patch(f"/objects/{id1}/field", headers=h1,
-                     json={"field_path": f"ratings.{{id:{rid}}}.value", "value": 1})
+        client.patch(
+            f"/objects/{id1}/field", headers=h1, json={"field_path": f"ratings.{{id:{rid}}}.value", "value": 1}
+        )
 
         # Window 2 (separate session) opens the same file -> independent copy
         h2 = {"Authorization": f"Bearer {client.post('/session/').json()}"}

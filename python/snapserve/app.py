@@ -1,12 +1,12 @@
+import os
 from pathlib import Path
+
+import snapserve.content.controller as content
+import snapserve.files.controller as files
+import snapserve.snap.controller as snap
 from lepton.app import LeptonApp, LeptonConfig
 from lepton_common.objects import IOHelper
-import os
-
-from snapcheck.snap import load_snap, save_snap, new_snap
-import snapserve.snap.controller as snap
-import snapserve.files.controller as files
-import snapserve.content.controller as content
+from snapcheck.snap import load_snap, new_snap, save_snap
 from snapserve.snap.models import SnapModel
 
 launch_secret = os.getenv("LAUNCH_SECRET")

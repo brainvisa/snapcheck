@@ -1,37 +1,40 @@
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, List
-from os import makedirs, mkdir, rename, listdir
 import json
-import tempfile
-import shutil
-import zipfile
-from warnings import warn
 import os.path as op
-from xhtml2pdf import pisa
-from pypdf import PdfWriter
-from bs4 import BeautifulSoup as bs
+import shutil
+import tempfile
+import zipfile
+from dataclasses import dataclass, field
+from os import listdir, makedirs, mkdir, rename
+from pathlib import Path
+from typing import Any
+from warnings import warn
 
+from bs4 import BeautifulSoup as bs
 from lepton_common import LObject
+from pypdf import PdfWriter
 from snapcheck.snap.board import AbstractElement, Board
 from snapcheck.snap.elements import FileElement, ImageElement
 from snapcheck.snap.rating import Rating
+from xhtml2pdf import pisa
 
 
 def html_to_pdf(html_string, output_path):
     with open(output_path, "w+b") as pdf_file:
         pisa.CreatePDF(html_string, dest=pdf_file)
 
+
 def prettify_html(html_string: str) -> str:
     """Prettify the HTML string for better readability."""
     soup = bs(html_string, "html.parser")
     return soup.prettify()
 
+
 @dataclass
 class Snap(LObject):
     """
-        A Snap represents a collection of boards, ratings, and associated metadata.
+    A Snap represents a collection of boards, ratings, and associated metadata.
     """
+
     title: str | None = None
     description: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -91,7 +94,7 @@ class Snap(LObject):
         )
         return super().to_json()
 
-    def save(self, path: str|None = None):
+    def save(self, path: str | None = None):
         # By default keep the same path
         if path is None:
             if self._filepath is None:
@@ -106,7 +109,7 @@ class Snap(LObject):
         js_f = op.join(tmp_dir.name, fname + ".json")
 
         # List all elements
-        files_elements: List[FileElement] = list(filter(lambda e: isinstance(e, FileElement), self.get_all_elements()))
+        files_elements: list[FileElement] = list(filter(lambda e: isinstance(e, FileElement), self.get_all_elements()))
         source_tracker = {}
         # Copy each source file and change its path in each elements
         for el in files_elements:
@@ -132,7 +135,6 @@ class Snap(LObject):
 
         self._has_changed = False
 
-
     def _generate_board_html_header(self, board_index: int) -> str:
         header = f"""<div class='snap-header'>
             <div class='snap-title'>
@@ -148,7 +150,7 @@ class Snap(LObject):
         header += "</ul></nav></div>"
         return header
 
-    def export_to_html(self, save_path: str | None = None, compress: bool =False):
+    def export_to_html(self, save_path: str | None = None, compress: bool = False):
         # Create the ouput directory
         makedirs(save_path, exist_ok=True)
 
@@ -156,7 +158,7 @@ class Snap(LObject):
         boards = [board.to_html() for board in self.boards]
         board_links = [op.join(save_path, f"board_{b}.html") for b in range(len(self.boards))]
 
-            # Save each board
+        # Save each board
         for b, board in enumerate(self.boards):
             board_html = f"""<html>
             <head>
@@ -235,7 +237,6 @@ class Snap(LObject):
         merger.close()
 
 
-
 def new_infered_snap(path: str) -> Snap:
     """Create a new Snap object with default values."""
     # Check if the path is an image file (jpg, png, gif, bmp, tiff)
@@ -251,11 +252,7 @@ def new_infered_snap(path: str) -> Snap:
         elements=[el],
     )
 
-    snap = Snap(
-        title = "Untitled Snap",
-        description = "",
-        boards = [board]
-    )
+    snap = Snap(title="Untitled Snap", description="", boards=[board])
 
     return snap
 

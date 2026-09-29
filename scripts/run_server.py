@@ -1,8 +1,7 @@
-from lepton.app import DEFAULT_HOST, DEFAULT_PORT
-from snapserve import app
 import argparse
 
-
+from lepton.app import DEFAULT_HOST, DEFAULT_PORT
+from snapserve import app
 
 parser = argparse.ArgumentParser(description="Run the SnapServe server")
 parser.add_argument("--host", type=str, default=DEFAULT_HOST, help="The host to bind the server to")

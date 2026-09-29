@@ -2,17 +2,16 @@ from lepton_common.objects import Backupable, Changeable, Serializable
 
 
 class TestChangeable:
-
     def test_no_changed_signal_context_manager(self):
         class DummyChangeable(Changeable):
             x: int = 0
-        
+
         res = None
 
         def clbk(obj):
             nonlocal res
             res = obj.x
-            
+
         dummy = DummyChangeable()
         dummy.has_changed.connect(clbk)
         dummy.x = 10
@@ -31,7 +30,6 @@ class TestChangeable:
 
 
 class TestSerializable:
-    
     def test_to_dict_basic_attributes(self):
         class DummySerializable(Serializable):
             def __init__(self):
