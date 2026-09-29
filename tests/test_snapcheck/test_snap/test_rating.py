@@ -64,15 +64,9 @@ class TestRating:
             ratings=[
                 RatingScaleItem(name="Bad", value=0),
                 RatingScaleItem(name="Good", value=1),
-            ]
+            ],
         )
-        rating = Rating(
-            name="Quality",
-            description="Quality assessment",
-            scale=scale,
-            value=1,
-            comment="Looks good"
-        )
+        rating = Rating(name="Quality", description="Quality assessment", scale=scale, value=1, comment="Looks good")
         assert rating.name == "Quality"
         assert rating.description == "Quality assessment"
         assert rating.scale == scale

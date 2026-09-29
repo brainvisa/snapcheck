@@ -1,15 +1,14 @@
-import Sidebar from './lepton/pages/main/sidebar/sidebar';
-import MainContent from './lepton/pages/main/main';
-import Modal from './lepton/components/lib/modal/modal';
-import TopBar from './lepton/pages/main/topbar/topbar';
-import { useEffect, useRef } from 'react';
-import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
-import { useAppUIState } from './contexts/AppUIStateContext';
 import { ApiTokenSync } from '@api/ApiTokenSync';
-import { useSnap, useSaveSnap, useSaveSnapAs, useCloseSnap } from '@api/snap';
+import { useCloseSnap, useSaveSnap, useSaveSnapAs, useSnap } from '@api/snap';
+import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import './Snapcheck.css'
-
+import { useEffect, useRef } from 'react';
+import { useAppUIState } from './contexts/AppUIStateContext';
+import Modal from './lepton/components/lib/modal/modal';
+import MainContent from './lepton/pages/main/main';
+import Sidebar from './lepton/pages/main/sidebar/sidebar';
+import TopBar from './lepton/pages/main/topbar/topbar';
+import './Snapcheck.css';
 
 const ShortCuts: React.FC<{}> = () => {
     const { showSidebar, setState } = useAppUIState();
@@ -29,53 +28,53 @@ const ShortCuts: React.FC<{}> = () => {
             const key = e.key.toLowerCase();
             const { snap, showSidebar, currentLObjectPath } = latest.current;
 
-            if (key === "b") {
+            if (key === 'b') {
                 e.preventDefault();
                 setState({ showSidebar: !showSidebar });
-            } else if (key === "s" && e.shiftKey) {
+            } else if (key === 's' && e.shiftKey) {
                 e.preventDefault();
                 if (snap?.id) {
-                    const newPath = prompt("Enter the save path:");
+                    const newPath = prompt('Enter the save path:');
                     if (newPath) saveSnapAs.mutate({ snapId: snap.id, newPath });
                 }
-            } else if (key === "s") {
+            } else if (key === 's') {
                 e.preventDefault();
                 if (snap?.id && currentLObjectPath) saveSnap.mutate({ snapId: snap.id, path: currentLObjectPath });
-            } else if (key === "w") {
+            } else if (key === 'w') {
                 e.preventDefault();
                 if (snap?.id && currentLObjectPath) {
-                    if (confirm("Are you sure you want to close the snap? Unsaved changes will be lost.")) {
+                    if (confirm('Are you sure you want to close the snap? Unsaved changes will be lost.')) {
                         closeSnap.mutate({ snapId: snap.id, path: currentLObjectPath });
                         closeLObject(currentLObjectPath);
                     }
                 }
             }
         };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setState, closeLObject, saveSnap, saveSnapAs, closeSnap]);
 
-    return <></>
-}
+    return <></>;
+};
 
 function SnapCheck() {
     const { showSidebar } = useAppUIState();
     return (
-        <div className='app'>
+        <div className="app">
             <ApiTokenSync />
             <ShortCuts />
-            <div className='app-topbar'>
+            <div className="app-topbar">
                 <TopBar />
             </div>
             <div className="page-container">
-                <div className='sidebar-container' style={{ display: showSidebar ? "block" : "none" }}>
+                <div className="sidebar-container" style={{ display: showSidebar ? 'block' : 'none' }}>
                     <Sidebar />
                 </div>
-                <div className='main-container'>
+                <div className="main-container">
                     <div className="board-container">
                         <MainContent />
                     </div>
-                    <div className='modal-container'>
+                    <div className="modal-container">
                         <Modal />
                     </div>
                 </div>
@@ -85,4 +84,4 @@ function SnapCheck() {
     );
 }
 
-export default SnapCheck
+export default SnapCheck;

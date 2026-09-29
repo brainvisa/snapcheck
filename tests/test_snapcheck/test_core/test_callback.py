@@ -2,10 +2,9 @@ from lepton_common.callback import Callback
 
 
 class TestCallback:
-
     def test_connect_and_disconnect(self):
         cb = Callback()
-        
+
         res = None
 
         def set_res(x):
@@ -22,4 +21,3 @@ class TestCallback:
         res = None
         cb.emit(42)
         assert res is None
-        

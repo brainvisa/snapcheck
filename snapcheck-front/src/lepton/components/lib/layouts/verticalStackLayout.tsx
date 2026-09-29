@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "./verticalStackLayout.css";
-import { CloseFullscreen, OpenInFull } from "@mui/icons-material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import './verticalStackLayout.css';
+import { CloseFullscreen, OpenInFull } from '@mui/icons-material';
 
 // Constants for layout sizing
 const HEADER_MIN_HEIGHT = 36; // Minimum height of section headers in pixels
@@ -56,8 +56,8 @@ type VerticalStackLayoutProps = {
  * @returns A CSS-compatible size string
  */
 const toCssSize = (value: number | string | undefined) => {
-    if (value === undefined) return "100%";
-    return typeof value === "number" ? `${value}px` : value;
+    if (value === undefined) return '100%';
+    return typeof value === 'number' ? `${value}px` : value;
 };
 
 /**
@@ -68,11 +68,7 @@ const toCssSize = (value: number | string | undefined) => {
  * @param fallbackCount - Number of sections to fall back to if needed
  * @returns Array of normalized proportional heights
  */
-const normalizeHeightsFromPixels = (
-    pixels: number[],
-    total: number,
-    fallbackCount: number
-): number[] => {
+const normalizeHeightsFromPixels = (pixels: number[], total: number, fallbackCount: number): number[] => {
     const count = fallbackCount || pixels.length || 1;
     if (total <= 0 || pixels.length === 0) {
         return Array.from({ length: count }, () => 1 / count);
@@ -87,7 +83,7 @@ const normalizeHeightsFromPixels = (
 
 /**
  * VerticalStackLayout: A resizable, multi-section sidebar component.
- * 
+ *
  * Features:
  * - Drag handles between sections to resize them
  * - Maximize/restore sections with a header button
@@ -99,11 +95,11 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
     sections,
     height,
     minContentHeight = DEFAULT_MIN_CONTENT_HEIGHT,
-    className = "",
+    className = '',
 }) => {
     // Refs
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const lastSectionKey = useRef<string>(""); // Track section configuration changes
+    const lastSectionKey = useRef<string>(''); // Track section configuration changes
 
     // State: Container and section sizing
     const [containerHeight, setContainerHeight] = useState<number>(0); // Current container height in pixels
@@ -121,10 +117,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
     const [heightsBeforeMax, setHeightsBeforeMax] = useState<number[] | null>(null); // Heights before maximization
 
     // Computed: Space taken by resizers
-    const resizersHeight = useMemo(
-        () => RESIZER_THICKNESS * Math.max(sections.length - 1, 0),
-        [sections.length]
-    );
+    const resizersHeight = useMemo(() => RESIZER_THICKNESS * Math.max(sections.length - 1, 0), [sections.length]);
 
     // Computed: Vertical space available for sections (total - resizers)
     const availableHeight = useMemo(() => {
@@ -137,11 +130,11 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
      */
     const getMinHeightPx = useCallback(
         (section: StackSection) => HEADER_MIN_HEIGHT + (section.minContentHeight ?? minContentHeight),
-        [minContentHeight]
+        [minContentHeight],
     );
 
     // Computed: String key representing current section configuration
-    const sectionKey = useMemo(() => sections.map((s) => s.id).join("|"), [sections]);
+    const sectionKey = useMemo(() => sections.map((s) => s.id).join('|'), [sections]);
 
     /**
      * Calculates initial normalized heights for all sections based on:
@@ -189,18 +182,18 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
 
             // Target section gets minimum + extra space; others get only minimum
             const pixels = sections.map((section, index) =>
-                section.id === targetId ? minHeights[index] + extra : minHeights[index]
+                section.id === targetId ? minHeights[index] + extra : minHeights[index],
             );
 
             return normalizeHeightsFromPixels(pixels, availableHeight, sections.length);
         },
-        [availableHeight, getMinHeightPx, sections]
+        [availableHeight, getMinHeightPx, sections],
     );
 
     // Effect: Monitor container resize changes
     useEffect(() => {
         const node = containerRef.current;
-        if (!node || typeof ResizeObserver === "undefined") return;
+        if (!node || typeof ResizeObserver === 'undefined') return;
 
         setContainerHeight(node.getBoundingClientRect().height);
 
@@ -208,7 +201,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
             const entry = entries[0];
             if (entry) {
                 // Only update if height changed significantly (avoid floating point micro-changes)
-                setContainerHeight(prev => {
+                setContainerHeight((prev) => {
                     const newHeight = Math.round(entry.contentRect.height);
                     return Math.abs(prev - newHeight) >= 1 ? newHeight : prev;
                 });
@@ -229,7 +222,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
 
         const newHeights = buildInitialHeights();
         // Only update if heights actually changed (not just array reference)
-        setHeights(prev => {
+        setHeights((prev) => {
             if (prev.length === newHeights.length && prev.every((h, i) => Math.abs(h - newHeights[i]) < 0.001)) {
                 return prev;
             }
@@ -251,7 +244,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
             const baseHeights = heights.length === sections.length ? heights : buildInitialHeights();
             setDragState({ index, startY: event.clientY, startHeights: baseHeights });
         },
-        [availableHeight, heights, sections.length, buildInitialHeights]
+        [availableHeight, heights, sections.length, buildInitialHeights],
     );
 
     // Effect: Handle mouse drag for resizing sections
@@ -265,7 +258,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
             // Calculate vertical movement since drag started
             const delta = event.clientY - dragState.startY;
             const startPixels = dragState.startHeights.map((value) => value * availableHeight);
-            
+
             // The two adjacent sections share a fixed total height
             const totalPair = startPixels[dragState.index] + startPixels[dragState.index + 1];
 
@@ -292,12 +285,12 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
 
         const stopDragging = () => setDragState(null);
 
-        window.addEventListener("mousemove", handleMove);
-        window.addEventListener("mouseup", stopDragging);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', stopDragging);
 
         return () => {
-            window.removeEventListener("mousemove", handleMove);
-            window.removeEventListener("mouseup", stopDragging);
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', stopDragging);
         };
     }, [dragState, availableHeight, sections, getMinHeightPx]);
 
@@ -323,7 +316,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
             setHeights(computeMaximizedHeights(targetId));
             setMaximizedId(targetId);
         },
-        [sections.length, maximizedId, heightsBeforeMax, heights, buildInitialHeights, computeMaximizedHeights]
+        [sections.length, maximizedId, heightsBeforeMax, heights, buildInitialHeights, computeMaximizedHeights],
     );
 
     // Computed: Ensure heights are valid, fall back to equal distribution if needed
@@ -341,14 +334,14 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`vertical-stack-layout ${dragState ? "is-dragging" : ""} ${className}`.trim()}
+            className={`vertical-stack-layout ${dragState ? 'is-dragging' : ''} ${className}`.trim()}
             style={{ height: toCssSize(height) }}
         >
             {/* Render each section with its header and scrollable content */}
             {sections.map((section, index) => (
                 <React.Fragment key={section.id}>
                     <div
-                        className={`vsl-section ${maximizedId === section.id ? "vsl-section--maximized" : ""}`.trim()}
+                        className={`vsl-section ${maximizedId === section.id ? 'vsl-section--maximized' : ''}`.trim()}
                         style={availableHeight > 0 ? { height: `${sectionHeightsPx[index]}px` } : undefined}
                     >
                         {/* Section header with title and action buttons */}
@@ -362,9 +355,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
                                     type="button"
                                     className="vsl-icon-button"
                                     aria-label={
-                                        maximizedId === section.id
-                                            ? "Réduire la section"
-                                            : "Maximiser la section"
+                                        maximizedId === section.id ? 'Réduire la section' : 'Maximiser la section'
                                     }
                                     onClick={() => toggleMaximize(section.id)}
                                 >
@@ -379,9 +370,9 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
                         {/* Scrollable content area */}
                         <div
                             className="vsl-content"
-                            style={{ 
+                            style={{
                                 flex: 1,
-                                overflow: "auto"
+                                overflow: 'auto',
                             }}
                         >
                             {section.content}
@@ -390,7 +381,7 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
                     {/* Resizer between sections (not after the last section) */}
                     {index < sections.length - 1 && (
                         <div
-                            className={`vsl-resizer ${dragState?.index === index ? "dragging" : ""}`.trim()}
+                            className={`vsl-resizer ${dragState?.index === index ? 'dragging' : ''}`.trim()}
                             onMouseDown={(event) => startResize(index, event)}
                         />
                     )}
@@ -402,5 +393,3 @@ const VerticalStackLayout: React.FC<VerticalStackLayoutProps> = ({
 
 export default VerticalStackLayout;
 export type { StackSection };
-
-

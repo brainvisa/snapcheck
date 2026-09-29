@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
 import type { RatingModel, RatingScaleItem } from '@lepton/api-client';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import './ratinginput.css';
+
 interface RatingInputProps {
     rating: RatingModel;
     onChange?: (ratingId: RatingModel['id'], field: string, value: any) => void;
@@ -27,58 +29,59 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
             commentInputRef.current.focus();
         }
         if (onChange) {
-            onChange(rating.id, "value", raw === '' ? null : Number(raw));
+            onChange(rating.id, 'value', raw === '' ? null : Number(raw));
         }
     };
 
     const commitComment = () => {
         if (onChange && comment !== (rating.comment || '')) {
-            onChange(rating.id, "comment", comment);
+            onChange(rating.id, 'comment', comment);
         }
     };
 
     const name = rating.name || 'Unnamed (#' + rating.id + ')';
     const selectedRatingScale = rating.scale?.ratings?.find((nt: RatingScaleItem) => nt.value === selectedValue);
 
-    return <div className={`rating-input ${highlight ? ' rating-highlight' : ''}`}>
-        <div className="rating-state-bar"></div>
-        <div className="rating-content">
-            <div>
-                <span className="rating-name">{name}</span>
-                <select
-                    className="rating-select"
-                    value={(selectedValue === undefined || selectedValue === null) ? '' : String(selectedValue)}
-                    onChange={handleSelectChange}
-                    disabled={rating.scale == undefined}
-                    style={(selectedRatingScale && selectedRatingScale.color) ? { backgroundColor: selectedRatingScale.color } : {}}
-                >
-                    <option value=''>
-                        --
-                    </option>
-                    {rating.scale?.ratings &&
-                        rating.scale.ratings.map((nt: RatingScaleItem, idx: number) => (
-                            <option
-                                key={idx + 1}
-                                value={nt.value}
-                            >
-                                {nt.value} - {nt.name}
-                            </option>
-                        ))}
-                </select>
-            </div>
-            <div className='rating-second-line'>
-                <input
-                    type="text"
-                    className='rating-comment'
-                    ref={commentInputRef}
-                    placeholder="No comment"
-                    value={comment}
-                    onChange={(event) => setComment(event.target.value)}
-                    onBlur={commitComment}
-                />
+    return (
+        <div className={`rating-input ${highlight ? ' rating-highlight' : ''}`}>
+            <div className="rating-state-bar"></div>
+            <div className="rating-content">
+                <div>
+                    <span className="rating-name">{name}</span>
+                    <select
+                        className="rating-select"
+                        value={selectedValue === undefined || selectedValue === null ? '' : String(selectedValue)}
+                        onChange={handleSelectChange}
+                        disabled={rating.scale == null}
+                        style={
+                            selectedRatingScale && selectedRatingScale.color
+                                ? { backgroundColor: selectedRatingScale.color }
+                                : {}
+                        }
+                    >
+                        <option value="">--</option>
+                        {rating.scale?.ratings &&
+                            rating.scale.ratings.map((nt: RatingScaleItem, idx: number) => (
+                                <option key={idx + 1} value={nt.value}>
+                                    {nt.value} - {nt.name}
+                                </option>
+                            ))}
+                    </select>
+                </div>
+                <div className="rating-second-line">
+                    <input
+                        type="text"
+                        className="rating-comment"
+                        ref={commentInputRef}
+                        placeholder="No comment"
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                        onBlur={commitComment}
+                    />
+                </div>
             </div>
         </div>
-    </div>;
+    );
 };
 
 export default RatingInput;

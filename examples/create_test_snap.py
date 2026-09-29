@@ -5,13 +5,12 @@
 Create a test SNAP file for MNI template
 ==============================================================================
 """
+
+from snapcheck.snap import Board, Snap
 from snapcheck.snap.annotation import ArrowAnnotation
 from snapcheck.snap.elements import ImageElement
-from snapcheck.snap import Snap, Board
-from snapcheck.snap.snap import load_snap
 from snapcheck.snap.rating import Rating, RatingScale, RatingScaleItem
-
-
+from snapcheck.snap.snap import load_snap
 
 colors = ["#330C00", "#5f3c00", "#5A5400", "#364900"]
 
@@ -41,12 +40,16 @@ first_board = Board(
         ImageElement(
             title="Axial View",
             src="./examples/test_data/mni_axial.png",
-            intended_ratings=[Rating(id="coronal", name="Coronal", description="Quality of coronal view", scale=generic_scale)]
+            intended_ratings=[
+                Rating(id="coronal", name="Coronal", description="Quality of coronal view", scale=generic_scale)
+            ],
         ),
         ImageElement(
             title="Coronal View",
             src="./examples/test_data/mni_coronal.png",
-            intended_ratings=[Rating(id="axial", name="Axial", description="Quality of axial view", scale=generic_scale)]
+            intended_ratings=[
+                Rating(id="axial", name="Axial", description="Quality of axial view", scale=generic_scale)
+            ],
         ),
     ],
 )
@@ -57,7 +60,9 @@ first_board = Board(
 sag = ImageElement(
     title="Sagittal View",
     src="./examples/test_data/mni_lightbox.png",
-    intended_ratings=[Rating(id="sagittal", name="Sagittal", description="Quality of sagittal view", scale=generic_scale)]
+    intended_ratings=[
+        Rating(id="sagittal", name="Sagittal", description="Quality of sagittal view", scale=generic_scale)
+    ],
 )
 sag.annotations.append(ArrowAnnotation(x=150, y=200, width=50, length=0, color="blue", text="Check this area"))
 second_board = Board(
@@ -78,7 +83,7 @@ qc = Snap(
     metadata={
         "source": "MNI Template",
         "version": "1.0",
-    }
+    },
 )
 
 f = ".local/mni.snpk"

@@ -1,10 +1,11 @@
-import pytest
 import os
 import tempfile
-from snapcheck.snap.elements import Element, FileElement, ImageElement
-from snapcheck.snap.board import Board
-from snapcheck.snap.rating import Rating
+
+import pytest
 from snapcheck.snap.annotation import Annotation
+from snapcheck.snap.board import Board
+from snapcheck.snap.elements import Element, FileElement, ImageElement
+from snapcheck.snap.rating import Rating
 
 
 class TestElement:
@@ -25,7 +26,7 @@ class TestElement:
             style={"color": "red"},
             content="Test content",
             intended_ratings=[rating],
-            annotations=[annotation]
+            annotations=[annotation],
         )
         assert element.type == "default"
         assert element.title == "Test Element"
@@ -48,8 +49,8 @@ class TestFileElement:
         assert element.src == "relative/path.txt"
 
     def test_create_file_element_absolute_path(self):
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-        temp_file.close()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as temp_file:
+            pass
         try:
             element = FileElement(is_local=False, src=temp_file.name)
             assert element.is_local is False
@@ -69,21 +70,20 @@ class TestFileElement:
     def test_export_to_local_copy_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create source file
-            src_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-            src_file.write(b"test content")
-            src_file.close()
-            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as src_file:
+                src_file.write(b"test content")
+
             try:
                 element = FileElement(src=src_file.name, is_local=False)
                 element.export_to_local(tmpdir, "content")
-                
+
                 assert element.is_local is True
                 assert "content" in element.src
                 full_path = os.path.join(tmpdir, element.src)
                 assert os.path.isfile(full_path)
-                
+
                 # Verify content was copied
-                with open(full_path, 'rb') as f:
+                with open(full_path, "rb") as f:
                     assert f.read() == b"test content"
             finally:
                 os.unlink(src_file.name)
@@ -91,22 +91,21 @@ class TestFileElement:
     def test_export_to_local_with_name_conflict(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create source file
-            src_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", dir=tmpdir)
-            src_file.write(b"original")
-            src_file.close()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", dir=tmpdir) as src_file:
+                src_file.write(b"original")
             basename = os.path.basename(src_file.name)
-            
+
             # Create conflicting file in target content directory
             content_dir = os.path.join(tmpdir, "content")
             os.makedirs(content_dir, exist_ok=True)
             conflict_path = os.path.join(content_dir, basename)
-            with open(conflict_path, 'w') as f:
+            with open(conflict_path, "w") as f:
                 f.write("conflict")
-            
+
             try:
                 element = FileElement(src=src_file.name, is_local=False)
                 element.export_to_local(tmpdir, "content")
-                
+
                 # Should have suffix added due to conflict
                 assert element.is_local is True
                 assert os.path.basename(element.src) != basename
@@ -116,19 +115,18 @@ class TestFileElement:
 
     def test_export_to_local_with_source_tracker(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            src_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-            src_file.write(b"tracked")
-            src_file.close()
-            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as src_file:
+                src_file.write(b"tracked")
+
             try:
                 tracker = {}
                 element1 = FileElement(src=src_file.name, is_local=False)
                 element1.export_to_local(tmpdir, "content", source_tracker=tracker)
-                
+
                 # Second element with same source should reuse path
                 element2 = FileElement(src=src_file.name, is_local=False)
                 element2.export_to_local(tmpdir, "content", source_tracker=tracker)
-                
+
                 assert element1.src == element2.src
                 assert src_file.name in tracker
                 assert tracker[src_file.name] == element1.src
@@ -158,14 +156,14 @@ class TestBoard:
     def test_create_board_with_elements(self):
         element1 = Element()
         element2 = ImageElement(src="/path/to/image.png", is_local=True)
-        
+
         board = Board(
             title="Board with elements",
             description="Test description",
             style={"background": "white"},
-            elements=[element1, element2]
+            elements=[element1, element2],
         )
-        
+
         assert board.title == "Board with elements"
         assert board.description == "Test description"
         assert board.style == {"background": "white"}
@@ -180,7 +178,7 @@ class TestBoard:
         rating2 = Rating(name="Accuracy")
         element = Element(intended_ratings=[rating1, rating2])
         board = Board(title="Board", elements=[element])
-        
+
         ratings = board.all_intended_ratings
         assert len(ratings) == 2
         assert rating1 in ratings
@@ -190,12 +188,12 @@ class TestBoard:
         rating1 = Rating(name="Quality")
         rating2 = Rating(name="Accuracy")
         rating3 = Rating(name="Completeness")
-        
+
         element1 = Element(intended_ratings=[rating1, rating2])
         element2 = Element(intended_ratings=[rating2, rating3])
-        
+
         board = Board(title="Board", elements=[element1, element2])
-        
+
         ratings = board.all_intended_ratings
         assert len(ratings) == 3
         assert rating1 in ratings
@@ -206,9 +204,9 @@ class TestBoard:
         rating = Rating(name="Quality")
         element1 = Element(intended_ratings=[rating])
         element2 = Element(intended_ratings=[rating])
-        
+
         board = Board(title="Board", elements=[element1, element2])
-        
+
         ratings = board.all_intended_ratings
         # Should not duplicate the same rating instance
         assert len(ratings) == 1
@@ -216,5 +214,6 @@ class TestBoard:
 
     def test_board_is_serializable(self):
         from lepton_common.objects import Serializable
+
         board = Board(title="Test")
         assert isinstance(board, Serializable)

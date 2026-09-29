@@ -13,11 +13,10 @@ import uuid
 
 try:
     import requests
-
     from lepton.app import DEFAULT_PORT as DEFAULT_BACKEND_PORT
     from lepton.auth import Authenticator, TokenData
-    from snapclient.constants import DEFAULT_PORT, DEFAULT_URL
     from snapclient.__main__ import main as client_main
+    from snapclient.constants import DEFAULT_PORT, DEFAULT_URL
 except ImportError as e:
     # The GUI dependencies are optional with pip (snapcheck[client] extra)
     sys.exit(f'The SnapCheck client is not installed ({e}).\nInstall it with: pip install "snapcheck[client]"')
@@ -62,8 +61,17 @@ def main():
     env["SNAP_ALLOW_ORIGINS"] = ",".join(o for o in [env.get("SNAP_ALLOW_ORIGINS"), frontend_origin] if o)
     api_url = f"http://{args.host}:{args.backend_port}"
     backend = subprocess.Popen(
-        [sys.executable, "-m", "snapserve", "--host", args.host, "--port", str(args.backend_port),
-         "--session", session_id],
+        [
+            sys.executable,
+            "-m",
+            "snapserve",
+            "--host",
+            args.host,
+            "--port",
+            str(args.backend_port),
+            "--session",
+            session_id,
+        ],
         env=env,
     )
     try:

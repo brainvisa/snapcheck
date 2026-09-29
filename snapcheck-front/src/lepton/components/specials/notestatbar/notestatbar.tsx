@@ -1,5 +1,5 @@
-import React from 'react';
 import type { QualityControlModel } from '@lepton/api-client';
+import type React from 'react';
 import './notestatbar.css';
 
 interface NoteStatBarProps {
@@ -19,16 +19,13 @@ const NoteStatBar: React.FC<NoteStatBarProps> = ({ qc }) => {
                 display: 'block',
                 width: '100%',
                 height: '100%',
-                borderRadius: ".2em",
+                borderRadius: '.2em',
             }}
         />
     ));
 
     return (
-        <div
-            className="note-stat-bar"
-            style={{ gridTemplateColumns: `repeat(${noteCounts}, 1fr)` }}
-        >
+        <div className="note-stat-bar" style={{ gridTemplateColumns: `repeat(${noteCounts}, 1fr)` }}>
             {noteElements}
         </div>
     );

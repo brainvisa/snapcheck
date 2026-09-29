@@ -95,5 +95,12 @@ snapcheck = { path = ".", editable = true }
 # lepton_common is not on PyPI
 lepton_common = { git = "https://github.com/cati-neuroimaging/lepton-common.git" }
 
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependencies are declared in the default values of the arguments
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Security"]
+
 [tool.setuptools.packages.find]
 where = ["python"]
