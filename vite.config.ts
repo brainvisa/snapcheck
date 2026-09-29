@@ -7,6 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
+  // Static files are served at the root path (ex: /qwebchannel.js, /assets/icon-32.png)
+  publicDir: 'snapcheck-front/public',
   resolve: {
     preserveSymlinks: true,
     alias: {

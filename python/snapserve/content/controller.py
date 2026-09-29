@@ -6,7 +6,7 @@ from os.path import realpath, commonpath
 from snapserve.content.models import ContentModel
 from lepton.session.controller import get_session_from_token
 
-CONTENT_DIR = op.abspath(op.join(__file__, "..", "..", "..", "..", "shared", "static_content"))
+CONTENT_DIR = op.abspath(op.join(op.dirname(__file__), "static"))
 
 router = APIRouter()
 

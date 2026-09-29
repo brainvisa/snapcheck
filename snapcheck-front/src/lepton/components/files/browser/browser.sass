@@ -1,10 +1,20 @@
 
+// Fill the container (ex: a sidebar section) so that only the items list scrolls
+.files-browser
+    display: flex
+    flex-direction: column
+    height: 100%
+    min-height: 0
+
 .files-browser-items
     list-style: none
     padding: 0
     margin: 0
+    flex: 1 1 auto
+    min-height: 0
+    // Limit when the container has no fixed height
     max-height: 80vh
-    overflow-y: scroll
+    overflow-y: auto
 
     // Customize the scrollbar
     scrollbar-width: thin

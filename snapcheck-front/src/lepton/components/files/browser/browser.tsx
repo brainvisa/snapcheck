@@ -76,7 +76,7 @@ const FilesBrowser: React.FC<{
             );
         });
     }
-    return <div>
+    return <div className="files-browser">
         <div className="files-browser-breadcrumbs">{breadcrumbs}</div>
         <div className="files-filter-bar">
             <input type="text" placeholder="Search..." value={search} onChange={(event) => updateSarch(event)} onKeyDown={handleSearchKeyDown} />

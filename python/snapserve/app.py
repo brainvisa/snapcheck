@@ -18,6 +18,10 @@ config = LeptonConfig(
     launch_secret=launch_secret,
 )
 
+# Additional origins allowed to call the API (CORS), comma separated (ex: http://127.0.0.1:3050)
+extra_origins = [o.strip() for o in os.getenv("SNAP_ALLOW_ORIGINS", "").split(",") if o.strip()]
+config.allow_origins = config.allow_origins + extra_origins
+
 app = LeptonApp(config, IOHelper(SnapModel, load_snap, save_snap, new_snap), crud_router_cls=snap.SnapRouter)
 app.include_router(files.router, tags=["files"], prefix="/files")
 app.include_router(content.router, tags=["content"], prefix="/content")

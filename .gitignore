@@ -24,4 +24,12 @@ node_modules/
 package-lock.json
 dist/
 
-snapcheck-front/src/lepton/api-clientsrc/api/generated/
+snapcheck-front/src/lepton/api-client
+# Generated API client (npm run build_api)
+openapi.json
+src/api/generated/
+# Built frontend, embedded in the snapclient package
+python/snapclient/frontend/
+# Built packages (scripts/conda.sh, scripts/build_wheel.sh)
+output/
+

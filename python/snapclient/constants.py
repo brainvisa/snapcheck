@@ -9,7 +9,10 @@ def make_icon(path: str) -> QIcon:
     return icon
 
 
-FRONT_PATH = op.abspath(op.join(op.dirname(__file__), "..", "..", "snapcheck-front"))
+# Vite project root (where package.json and index.html are), only present in the sources
+FRONT_PATH = op.abspath(op.join(op.dirname(__file__), "..", ".."))
+# Built frontend, only present in the installed package
+FRONTEND_BUILD_PATH = op.abspath(op.join(op.dirname(__file__), "frontend"))
 DEFAULT_PORT = 3000
 DEFAULT_URL = "127.0.0.1"
 
