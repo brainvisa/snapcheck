@@ -1,24 +1,23 @@
-import sys
-import subprocess
-import time
-import atexit
-import requests
 import argparse
+import atexit
 import os
 import os.path as op
 import signal
+import subprocess
+import sys
 import threading
+import time
 from functools import partial
-from urllib.parse import urlencode
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlencode
 
 import PyQt5.QtWidgets as qw
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
-from PyQt5.QtCore import QUrl, Qt, QTimer, QObject, pyqtSlot
-from PyQt5.QtGui import QPixmap, QCursor, QIcon
+import requests
+from PyQt5.QtCore import QObject, Qt, QTimer, QUrl, pyqtSlot
+from PyQt5.QtGui import QCursor, QIcon, QPixmap
 from PyQt5.QtWebChannel import QWebChannel
-
-from snapclient.constants import APP_ICON, FRONT_PATH, FRONTEND_BUILD_PATH, DEFAULT_PORT, DEFAULT_URL, SPLASH_PATH
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEngineView
+from snapclient.constants import APP_ICON, DEFAULT_PORT, DEFAULT_URL, FRONT_PATH, FRONTEND_BUILD_PATH, SPLASH_PATH
 
 
 class BottomBar(qw.QWidget):
@@ -51,7 +50,7 @@ class Bridge(QObject):
     _multiplier = 1.5
     _last_move_time = None
 
-    def __init__(self, win, jwt: str = None):
+    def __init__(self, win, jwt: str | None = None):
         super().__init__()
         self.win = win
         self.jwt = jwt
@@ -101,7 +100,7 @@ class MainWindow(qw.QMainWindow):
     url: str
     jwt: str
 
-    def __init__(self, url: str, jwt: str = None):
+    def __init__(self, url: str, jwt: str | None = None):
         """
         Url: The URL to load in the web view.
         JWT: Authentification token to be sent to the server.
@@ -169,7 +168,7 @@ class MainWindow(qw.QMainWindow):
         if self.dragging and self.drag_position is not None:
             from PyQt5.QtGui import QCursor
 
-            print(f"🐛 DEBUG: mouseMoveEvent - dragging mode active")
+            print("🐛 DEBUG: mouseMoveEvent - dragging mode active")
             new_pos = QCursor.pos() - self.drag_position
             print(f"🐛 DEBUG: moving window to {new_pos}")
             self.move(new_pos)
@@ -293,26 +292,30 @@ def vite_commandline(host, port):
     return ["npm", "run", "dev", "--", "--host", host, "--port", str(port), "--strictPort"]
 
 
-def start_vite_server(host, port) -> subprocess.Popen:
+def start_vite_server(host, port) -> subprocess.Popen | None:
     """Start the Vite development server."""
     try:
         # Use a dedicated process group so that npm and its vite child can be stopped together
         return subprocess.Popen(vite_commandline(host, port), cwd=FRONT_PATH, start_new_session=True)
-    except Exception as e:
+    except OSError as e:
         print(f"Failed to start Vite server: {e}")
+        return None
 
 
-def stop_vite_server(process: subprocess.Popen):
+def stop_vite_server(process: subprocess.Popen | None):
     """Stop the Vite development server."""
+    if process is None:
+        return
     try:
         os.killpg(process.pid, signal.SIGTERM)
         process.wait()
-    except Exception as e:
+    except OSError as e:
         print(f"Failed to stop Vite server: {e}")
 
 
 class QuietHTTPRequestHandler(SimpleHTTPRequestHandler):
     """A request handler that suppresses logging messages."""
+
     def log_message(self, format, *args):
         pass
 
@@ -325,7 +328,7 @@ def start_static_server(host, port) -> ThreadingHTTPServer:
     return server
 
 
-def main(argv: list[str] = None):
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="SnapClient Application")
     parser.add_argument("--jwt", type=str, default=None, help="Authentification token.")
     parser.add_argument("--host", type=str, default=DEFAULT_URL, help="Host of the frontend server.")
@@ -379,7 +382,7 @@ def main(argv: list[str] = None):
             break
         time.sleep(0.2)
     else:
-        print(f"Server dind't start in time.")
+        print("Server dind't start in time.")
         sys.exit(1)
 
     window = MainWindow(page_url, jwt=args.jwt)

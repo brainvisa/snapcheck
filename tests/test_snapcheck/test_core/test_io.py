@@ -1,15 +1,13 @@
-from typing import List
 from lepton_common.io import DynamicLoader
 
 
 class SimpleObject:
     _a: int = 1
     b: str = "text"
-    c: List[int] = [1, 2, 3]
+    c: list[int] = [1, 2, 3]  # noqa: RUF012 - mutable attribute on purpose, it is the tested object
 
 
 class TestDynamicLoader:
-
     def test_load_class_existing(self):
         loader = DynamicLoader()
         mod = loader.get_module("lepton_common.io")
@@ -20,7 +18,7 @@ class TestDynamicLoader:
     def test_load_class_non_existing(self):
         loader = DynamicLoader()
         try:
-            mod = loader.get_module("non.existing.Module")
+            loader.get_module("non.existing.Module")
         except ImportError as e:
             assert "No module named" in str(e)
         else:
@@ -28,12 +26,7 @@ class TestDynamicLoader:
 
     def test_inflate(self):
         loader = DynamicLoader()
-        data = {
-            "__cls__": "test_io.SimpleObject",
-            "_a": 42,
-            "b": "hello",
-            "c": [4, 5, 6]
-        }
+        data = {"__cls__": "test_io.SimpleObject", "_a": 42, "b": "hello", "c": [4, 5, 6]}
         obj = loader.inflate(data)
         assert isinstance(obj, SimpleObject)
         assert obj._a == 42

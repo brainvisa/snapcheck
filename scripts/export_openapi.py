@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Export OpenAPI schema from the Snapcheck FastAPI app"""
+
 import json
 import sys
 from pathlib import Path

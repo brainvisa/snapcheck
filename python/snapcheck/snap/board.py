@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+
 from lepton_common.objects import Serializable
 from snapcheck.core.renderable import HTMLRenderable
 from snapcheck.snap.elements import AbstractElement, list_elements
@@ -30,7 +31,7 @@ class Board(Serializable, HTMLRenderable):
 
     # HTML Rendering
     def _generate_board_html_sidebar(self) -> str:
-        sidebar = f"""<div class='snap-sidebar'>
+        sidebar = """<div class='snap-sidebar'>
             <h3>Ratings</h3>
             <table class="snap-sidebar-table">"""
         for rating in self.all_intended_ratings:
@@ -40,10 +41,9 @@ class Board(Serializable, HTMLRenderable):
 
     def get_html_content(self) -> str:
         content_html = "".join(
-            item.to_html() if isinstance(item, HTMLRenderable) else str(item)
-            for item in self.elements
+            item.to_html() if isinstance(item, HTMLRenderable) else str(item) for item in self.elements
         )
-        html =  f"""
+        html = f"""
             <div class="snap-board">
                 {self._generate_board_html_sidebar()}
                 <div class="snap-board-content">
@@ -61,4 +61,3 @@ class Board(Serializable, HTMLRenderable):
             with open(save_path, "w") as f:
                 f.write(html)
         return html
-

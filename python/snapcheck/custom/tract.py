@@ -1,4 +1,5 @@
 from typing import Literal
+
 from snapcheck.snap.elements import FileElement
 
 

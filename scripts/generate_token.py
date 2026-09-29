@@ -1,7 +1,7 @@
-from lepton.auth import TokenData
-from snapserve import app
 import sys
 
+from lepton.auth import TokenData
+from snapserve import app
 
 app.auth.secret = sys.argv[1]
 sess = app.store.new_session()

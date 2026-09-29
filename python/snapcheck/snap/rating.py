@@ -1,4 +1,3 @@
-from typing import List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -6,12 +5,12 @@ class RatingScaleItem(BaseModel):
     name: str = ""
     value: int = 0
     description: str = ""
-    color: Optional[str] = None
+    color: str | None = None
 
 
 class RatingScale(BaseModel):
     description: str = ""
-    ratings: List[RatingScaleItem] = Field(default_factory=list)
+    ratings: list[RatingScaleItem] = Field(default_factory=list)
 
     def check(self):
         """Verify the object content integrity.
@@ -45,16 +44,16 @@ class Rating(BaseModel):
     Scale can be leaved None if only comment will be used.
     """
 
-    id: Optional[str] = None
+    id: str | None = None
     name: str = ""
     description: str = ""
-    scale: Optional[RatingScale] = None
+    scale: RatingScale | None = None
 
     is_boolean: bool = False
     allow_comment: bool = True
 
-    value: Optional[int] = None
-    comment: Optional[str] = None
+    value: int | None = None
+    comment: str | None = None
 
     @model_validator(mode="after")
     def generate_id(self):

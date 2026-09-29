@@ -1,11 +1,12 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Any
+from typing import Any
 
 
 @dataclass
 class HTMLRenderable:
     """Mixin class to provide HTML rendering capability."""
-    
+
     def get_html_content(self) -> Any:
         """Provide the content to be rendered inside the HTML element."""
         return ""
@@ -16,18 +17,15 @@ class HTMLRenderable:
         if _id:
             html += f" id='{self.html_id}'"
         if _classes:
-            html += f" class=\"{' '.join(self.html_classes)}\""
+            html += f' class="{" ".join(self.html_classes)}"'
         if _style:
             style_str = "; ".join(f"{k}: {v}" for k, v in self.html_style.items())
-            html += f" style=\"{style_str}\""
+            html += f' style="{style_str}"'
         html += ">"
         content = self.get_html_content()
         if isinstance(content, HTMLRenderable):
             content = content.to_html()
         elif isinstance(content, Iterable) and not isinstance(content, str):
-            content = "".join(
-                item.to_html() if isinstance(item, HTMLRenderable) else str(item)
-                for item in content
-            )
+            content = "".join(item.to_html() if isinstance(item, HTMLRenderable) else str(item) for item in content)
 
         return html + content + "</div>"

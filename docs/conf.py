@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # snapcheck documentation build configuration file, created by
 # sphinx-quickstart on Tue Nov 27 18:47:41 2018.
@@ -16,18 +15,18 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
 import os.path as op
+import sys
 
-sys.path.insert(0, op.abspath('../python'))
+sys.path.insert(0, op.abspath("../python"))
 # sys.path.insert(0, os.path.abspath('.'))
 
-from warnings import warn
 from datetime import date
+from warnings import warn
+
+import sphinx_bootstrap_theme
 import sphinx_gallery  # noqa
 from sphinx_gallery.sorting import FileNameSortKey
-import sphinx_bootstrap_theme
 
 # -- General configuration ------------------------------------------------
 
@@ -39,54 +38,54 @@ import sphinx_bootstrap_theme
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.intersphinx',
-    'numpydoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.doctest',
-    'sphinx_gallery.gen_gallery',
-    'sphinxcontrib.fulltoc',
-    'sphinx_mdinclude',
-    'sphinxcontrib.openapi',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+    "numpydoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.fulltoc",
+    "sphinx_mdinclude",
+    "sphinxcontrib.openapi",
 ]
 
 # generate autosummary even if no references
 autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'SnapCheck'
-td = date.today()
-copyright = u'%s, Snapcheck Developers (CATI team). Last updated on %s' % (td.year, td.isoformat())
+project = "SnapCheck"
+td = date.today()  # noqa: DTZ011 - local date of the build
+copyright = f"{td.year}, Snapcheck Developers (CATI team). Last updated on {td.isoformat()}"
 
-author = 'Snapcheck Developers (CATI team)'
+author = "Snapcheck Developers (CATI team)"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-pyproject_root = '../pyproject.toml'
-with open(pyproject_root, 'r') as f:
+pyproject_root = "../pyproject.toml"
+with open(pyproject_root, "r") as f:
     for line in f:
-        if line.startswith('version = '):
-            version = line.split('=')[1].strip().strip('"')
+        if line.startswith("version = "):
+            version = line.split("=")[1].strip().strip('"')
             break
     else:
         warn(f"Could not find version in {pyproject_root}")
-        version = '0.0.0'
+        version = "0.0.0"
 
 # The full version, including alpha/beta/rc tags.
 release = version
@@ -101,10 +100,10 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -115,7 +114,7 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'bootstrap'
+html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -124,14 +123,13 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 #
 html_logo = "_static/logo.jpg"
 
-html_sidebars = {'**': ['localtoc.html', 'searchbox.html'],
-   'using/windows': ['windowssidebar.html', 'searchbox.html']}
+html_sidebars = {"**": ["localtoc.html", "searchbox.html"], "using/windows": ["windowssidebar.html", "searchbox.html"]}
 
 html_theme_options = {
-    'navbar_title': 'SnapCheck',
-    'bootswatch_theme': "flatly",
-    'navbar_sidebarrel': False,
-    'bootstrap_version': "3",
+    "navbar_title": "SnapCheck",
+    "bootswatch_theme": "flatly",
+    "navbar_sidebarrel": False,
+    "bootstrap_version": "3",
     # 'navbar_links': [
     #     ("Gallery", "auto_examples/index"),
     #     ("API", "api"),
@@ -139,18 +137,18 @@ html_theme_options = {
     #     ("Installation", "install"),
     #     ("Github", "https://github.com/brainvisa/snapcheck", True),
     # ]
-    }
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
+# html_static_path = ['_static']
 
 
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'snapcheckdoc'
+htmlhelp_basename = "snapcheckdoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -159,27 +157,24 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
 }
 
 latex_elements = {
-    'papersize': 'a4paper',
-    'pointsize': '12pt',
-    'preamble': r'''
+    "papersize": "a4paper",
+    "pointsize": "12pt",
+    "preamble": r"""
     \usepackage[none]{hyphenat}
     \usepackage[document]{ragged2e}
-    '''
+    """,
 }
 
 
@@ -187,8 +182,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'snapcheck.tex', 'Snapcheck Documentation',
-     'CATI', 'manual'),
+    (master_doc, "snapcheck.tex", "Snapcheck Documentation", "CATI", "manual"),
 ]
 
 
@@ -196,10 +190,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'snapcheck', 'Snapcheck Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "snapcheck", "Snapcheck Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -208,19 +199,25 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'snapcheck', 'Snapcheck Documentation',
-     author, 'snapcheck', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        "snapcheck",
+        "Snapcheck Documentation",
+        author,
+        "snapcheck",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
-intersphinx_mapping = {'python': ('https://docs.python.org/', None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/", None)}
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../examples',
-    'gallery_dirs': 'auto_examples',
-    'filename_pattern': '^((?!sgskip).)*$',
-    'backreferences_dir': 'generated',
-    'within_subsection_order': FileNameSortKey,
+    "examples_dirs": "../examples",
+    "gallery_dirs": "auto_examples",
+    "filename_pattern": "^((?!sgskip).)*$",
+    "backreferences_dir": "generated",
+    "within_subsection_order": FileNameSortKey,
     # 'reference_url': {
     #     'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
     #     'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference',
@@ -230,8 +227,8 @@ sphinx_gallery_conf = {
 }
 
 
-path = op.join(op.dirname(__file__), '../examples/')
+path = op.join(op.dirname(__file__), "../examples/")
 sys.path.insert(0, path)
 
-#from visbrain.config import CONFIG
-#CONFIG['MPL_RENDER'] = True
+# from visbrain.config import CONFIG
+# CONFIG['MPL_RENDER'] = True

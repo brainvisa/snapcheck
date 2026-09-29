@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel
 from snapcheck.snap.elements import ElementUnion
 from snapcheck.snap.rating import Rating
@@ -9,15 +8,15 @@ class BoardModel(BaseModel):
     description: str
     # all_intended_ratings: List[RatingModel] # TODO add this or not ? (already in elements)
     style: dict[str, str]
-    elements: List[ElementUnion]  # Use the union instead of AbstractElement
+    elements: list[ElementUnion]  # Use the union instead of AbstractElement
 
 
 class SnapModel(BaseModel):
     title: str | None = None
     description: str | None = None
     metadata: dict
-    ratings: List[Rating] = []
-    boards: List[BoardModel] = []
+    ratings: list[Rating] = []
+    boards: list[BoardModel] = []
 
     id: str | None = None
     version: int = 0
@@ -38,4 +37,4 @@ class SnapShortModel(BaseModel):
 class SnapCheckSessionModel(BaseModel):
     id: str
     last_access: float
-    items: List[SnapShortModel] = []
+    items: list[SnapShortModel] = []

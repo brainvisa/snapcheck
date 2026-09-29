@@ -1,12 +1,14 @@
+import os.path as op
+import shutil
+from collections.abc import Iterable
 from dataclasses import field
-from typing import Iterable, List, Literal, Union
+from typing import Literal, Union
+from warnings import warn
+
 from pydantic import BaseModel
 from snapcheck.core.renderable import HTMLRenderable
 from snapcheck.snap.annotation import Annotation
 from snapcheck.snap.rating import Rating
-import shutil
-import os.path as op
-from warnings import warn
 
 
 class AbstractElement(BaseModel, HTMLRenderable):
@@ -14,7 +16,7 @@ class AbstractElement(BaseModel, HTMLRenderable):
     title: str | None = None
     style: dict[str, str] = field(default_factory=dict)  # Element CSS style
     intended_ratings: list[Rating] = field(default_factory=list)  # List of rating IDs
-    annotations: List[Annotation] = field(default_factory=list)
+    annotations: list[Annotation] = field(default_factory=list)
 
     def get_html_content(self):
         return "?"
@@ -25,7 +27,7 @@ class AbstractElement(BaseModel, HTMLRenderable):
 
 class Element(AbstractElement):
     type: Literal["default"] = "default"
-    content: Union[str, "ElementUnion", None, List[Union["ElementUnion", str, None]]] = None
+    content: Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]] = None
 
     def get_html_content(self) -> str:
         return self.content
@@ -34,7 +36,9 @@ class Element(AbstractElement):
 class RowElement(Element):
     type: Literal["row"] = "row"
     style: dict = field(default_factory=lambda: {"display": "flex"})
-    content: List[Union[str, "ElementUnion", None, List[Union["ElementUnion", str, None]]]] = field(default_factory=list)
+    content: list[Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]]] = field(
+        default_factory=list
+    )
 
     def __len__(self):
         return len(self.content)
@@ -96,7 +100,7 @@ class FileElement(AbstractElement):
             # When the element is alreayd local, keep the relative path
             self.src = op.abspath(self.src)
 
-    def export_to_local(self, root_dir, subdir: str, source_tracker: dict = None):
+    def export_to_local(self, root_dir, subdir: str, source_tracker: dict | None = None):
         """Copy the file to the target directory and update the path.
         Target directory will be created if it does not exist.
         If a file with the same name already exists, a suffix is added.
@@ -146,7 +150,7 @@ class ImageElement(FileElement):
 ElementUnion = ImageElement | FileElement | RowElement | Element
 
 
-def list_elements(item: Union[list, ElementUnion]) -> List[ElementUnion]:
+def list_elements(item: list | ElementUnion) -> list[ElementUnion]:
     """Recursively list all elements in an element or list of elements."""
     elements = []
 
