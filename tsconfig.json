@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lepton/core": [
+        "./node_modules/@lepton/core"
+      ],
+      "@lepton/core/*": [
+        "./node_modules/@lepton/core/*"
+      ],
+      "@lepton/api": [
+        "./src/api/generated"
+      ],
+      "@lepton/api-client": [
+        "./snapcheck-front/src/api/types.ts"
+      ],
+      "@api/*": [
+        "./src/api/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "snapcheck-front/src"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}
