@@ -1,9 +1,11 @@
-import { useState } from "react";
-import FilesBrowser from "../../components/files/browser/browser";
-import { useModal } from "@lepton/core/contexts/ModalContext";
+import { useModal } from '@lepton/core/contexts/ModalContext';
+import { useState } from 'react';
+import FilesBrowser from '../../components/files/browser/browser';
 
-const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => Promise<string | boolean> | string | boolean }> = ({ onSubmit }) => {
-    const [currentPath, setCurrentPath] = useState<string>("");
+const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => Promise<string | boolean> | string | boolean }> = ({
+    onSubmit,
+}) => {
+    const [currentPath, setCurrentPath] = useState<string>('');
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const { hideModal } = useModal();
 
@@ -11,22 +13,20 @@ const ExportHTMLPage: React.FC<{ onSubmit: (path: string) => Promise<string | bo
         const res = await onSubmit(currentPath);
         if (!res) hideModal();
         else {
-            setErrorMsg(typeof res === "string" ? res : "An error occurred while exporting.");
+            setErrorMsg(typeof res === 'string' ? res : 'An error occurred while exporting.');
         }
-    }
+    };
 
-    return <div>
-        <h1>Export</h1>
-        <h2>HTML</h2>
+    return (
+        <div>
+            <h1>Export</h1>
+            <h2>HTML</h2>
 
-        <FilesBrowser
-            path={currentPath}
-            onPathChange={(p) => setCurrentPath(p || "")}
-            extensions={[".snpk"]}
-        />
-        {errorMsg && <p className="error-message">{errorMsg}</p>}
-        <button onClick={submit}>Export</button>
-    </div>
-}
+            <FilesBrowser path={currentPath} onPathChange={(p) => setCurrentPath(p || '')} extensions={['.snpk']} />
+            {errorMsg && <p className="error-message">{errorMsg}</p>}
+            <button onClick={submit}>Export</button>
+        </div>
+    );
+};
 
 export default ExportHTMLPage;

@@ -1,5 +1,5 @@
-import React from 'react';
-import "./lib.css"
+import type React from 'react';
+import './lib.css';
 
 type InlineToggleProps = {
     off: string;
@@ -15,10 +15,26 @@ const InlineToggle: React.FC<InlineToggleProps> = ({ off, on, value, onChange, c
             onChange(bool);
         }
     };
-    return <div className={`inline-toggle ${className}`}>
-        <span className={`toggle-label ${!value ? 'active' : ''}`} onClick={() => { if (value) handleClick(false) }}>{off}</span>
-        <span className={`toggle-label ${value ? 'active' : ''}`} onClick={() => { if (!value) handleClick(true) }}>{on}</span>
-    </div>;
+    return (
+        <div className={`inline-toggle ${className}`}>
+            <span
+                className={`toggle-label ${!value ? 'active' : ''}`}
+                onClick={() => {
+                    if (value) handleClick(false);
+                }}
+            >
+                {off}
+            </span>
+            <span
+                className={`toggle-label ${value ? 'active' : ''}`}
+                onClick={() => {
+                    if (!value) handleClick(true);
+                }}
+            >
+                {on}
+            </span>
+        </div>
+    );
 };
 
 export default InlineToggle;
