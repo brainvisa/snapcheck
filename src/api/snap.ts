@@ -1,14 +1,14 @@
-import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  openOptions,
-  openQueryKey,
-  getAllSettingsOptions,
-  listDirectoryOptions,
-  listRootDirectoryOptions,
-  getStaticContentOptions,
+    getAllSettingsOptions,
+    getStaticContentOptions,
+    listDirectoryOptions,
+    listRootDirectoryOptions,
+    openOptions,
+    openQueryKey,
 } from './generated/@tanstack/react-query.gen';
-import { patchField, save, saveAs, close } from './generated/sdk.gen';
-import type { SnapModel, LightweightResponse } from './generated/types.gen';
+import { close, patchField, save, saveAs } from './generated/sdk.gen';
+import type { LightweightResponse, SnapModel } from './generated/types.gen';
 import { setByPath } from './setByPath';
 
 /** Query key for a snap document, keyed by its file path (single source of truth). */
@@ -16,17 +16,17 @@ export const snapKey = (path: string) => openQueryKey({ path: { path } });
 
 /** Query options for a snap, for use with useQuery/useQueries (keyed by path). */
 export const snapQueryOptions = (path: string) => ({
-  ...openOptions({ path: { path } }),
-  staleTime: Infinity,
+    ...openOptions({ path: { path } }),
+    staleTime: Infinity,
 });
 
 /** Read a snap document from the TanStack cache (fetches on first use). */
 export function useSnap(path: string | null) {
-  return useQuery({
-    ...openOptions({ path: { path: path ?? '' } }),
-    enabled: !!path,
-    staleTime: Infinity,
-  });
+    return useQuery({
+        ...openOptions({ path: { path: path ?? '' } }),
+        enabled: !!path,
+        staleTime: Infinity,
+    });
 }
 
 type PatchVars = { fieldPath: string; value: unknown };
@@ -38,76 +38,79 @@ type PatchVars = { fieldPath: string; value: unknown };
  *  - sends expected_version and rolls back / refetches on conflict.
  */
 export function usePatchField(path: string | null, snapId: string | undefined) {
-  const qc = useQueryClient();
-  const key = path ? snapKey(path) : null;
+    const qc = useQueryClient();
+    const key = path ? snapKey(path) : null;
 
-  return useMutation({
-    scope: { id: snapId ? `lobject:${snapId}` : 'lobject' },
-    mutationFn: async (vars: PatchVars): Promise<LightweightResponse> => {
-      if (!snapId) throw new Error('No snap id');
-      const prev = key ? qc.getQueryData<SnapModel>(key) : undefined;
-      const { data } = await patchField({
-        path: { snap_id: snapId },
-        body: { field_path: vars.fieldPath, value: vars.value, expected_version: prev?.version ?? null },
-        throwOnError: true,
-      });
-      return data!;
-    },
-    onMutate: async (vars) => {
-      if (!key) return {};
-      await qc.cancelQueries({ queryKey: key });
-      const prev = qc.getQueryData<SnapModel>(key);
-      if (prev) {
-        const next = setByPath({ ...prev, has_changed: true }, vars.fieldPath, vars.value);
-        qc.setQueryData<SnapModel>(key, next);
-      }
-      return { prev };
-    },
-    onError: (_err, _vars, ctx: any) => {
-      if (key && ctx?.prev) qc.setQueryData(key, ctx.prev);
-      if (key) qc.invalidateQueries({ queryKey: key });
-    },
-    onSuccess: (resp) => {
-      if (!key) return;
-      const cur = qc.getQueryData<SnapModel>(key);
-      if (cur) qc.setQueryData<SnapModel>(key, { ...cur, version: resp.version, has_changed: resp.has_changed });
-    },
-  });
+    return useMutation({
+        scope: { id: snapId ? `lobject:${snapId}` : 'lobject' },
+        mutationFn: async (vars: PatchVars): Promise<LightweightResponse> => {
+            if (!snapId) throw new Error('No snap id');
+            const prev = key ? qc.getQueryData<SnapModel>(key) : undefined;
+            const { data } = await patchField({
+                path: { snap_id: snapId },
+                body: { field_path: vars.fieldPath, value: vars.value, expected_version: prev?.version ?? null },
+                throwOnError: true,
+            });
+            return data!;
+        },
+        onMutate: async (vars) => {
+            if (!key) return {};
+            await qc.cancelQueries({ queryKey: key });
+            const prev = qc.getQueryData<SnapModel>(key);
+            if (prev) {
+                const next = setByPath({ ...prev, has_changed: true }, vars.fieldPath, vars.value);
+                qc.setQueryData<SnapModel>(key, next);
+            }
+            return { prev };
+        },
+        onError: (_err, _vars, ctx: any) => {
+            if (key && ctx?.prev) qc.setQueryData(key, ctx.prev);
+            if (key) qc.invalidateQueries({ queryKey: key });
+        },
+        onSuccess: (resp) => {
+            if (!key) return;
+            const cur = qc.getQueryData<SnapModel>(key);
+            if (cur) qc.setQueryData<SnapModel>(key, { ...cur, version: resp.version, has_changed: resp.has_changed });
+        },
+    });
 }
 
 export function useSaveSnap() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { snapId: string; path: string }) => {
-      const { data } = await save({ query: { object_id: vars.snapId }, throwOnError: true });
-      return { snap: data!, path: vars.path };
-    },
-    onSuccess: ({ snap, path }) => {
-      if (snap) qc.setQueryData(snapKey(path), snap);
-    },
-  });
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (vars: { snapId: string; path: string }) => {
+            const { data } = await save({ query: { object_id: vars.snapId }, throwOnError: true });
+            return { snap: data!, path: vars.path };
+        },
+        onSuccess: ({ snap, path }) => {
+            if (snap) qc.setQueryData(snapKey(path), snap);
+        },
+    });
 }
 
 export function useSaveSnapAs() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { snapId: string; newPath: string }) => {
-      const { data } = await saveAs({ query: { object_id: vars.snapId, new_path: vars.newPath }, throwOnError: true });
-      return data!;
-    },
-    onSuccess: () => qc.invalidateQueries(),
-  });
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (vars: { snapId: string; newPath: string }) => {
+            const { data } = await saveAs({
+                query: { object_id: vars.snapId, new_path: vars.newPath },
+                throwOnError: true,
+            });
+            return data!;
+        },
+        onSuccess: () => qc.invalidateQueries(),
+    });
 }
 
 export function useCloseSnap() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { snapId: string; path: string }) => {
-      await close({ query: { object_id: vars.snapId }, throwOnError: true });
-      return vars;
-    },
-    onSuccess: (vars) => qc.removeQueries({ queryKey: snapKey(vars.path) }),
-  });
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (vars: { snapId: string; path: string }) => {
+            await close({ query: { object_id: vars.snapId }, throwOnError: true });
+            return vars;
+        },
+        onSuccess: (vars) => qc.removeQueries({ queryKey: snapKey(vars.path) }),
+    });
 }
 
 /* ------------------------------------------------------------------ */
@@ -115,16 +118,16 @@ export function useCloseSnap() {
 /* ------------------------------------------------------------------ */
 
 export function useSettingsQuery() {
-  return useQuery({ ...getAllSettingsOptions(), staleTime: Infinity });
+    return useQuery({ ...getAllSettingsOptions(), staleTime: Infinity });
 }
 
 export function useDirectory(path: string | null, extensions?: string[]) {
-  const options = path
-    ? listDirectoryOptions({ path: { path }, body: extensions ?? null })
-    : listRootDirectoryOptions({ body: extensions ?? null });
-  return useQuery({ ...(options as any), placeholderData: keepPreviousData });
+    const options = path
+        ? listDirectoryOptions({ path: { path }, body: extensions ?? null })
+        : listRootDirectoryOptions({ body: extensions ?? null });
+    return useQuery({ ...(options as any), placeholderData: keepPreviousData });
 }
 
 export function useServerContent(path: string) {
-  return useQuery({ ...getStaticContentOptions({ path: { path } }), staleTime: Infinity });
+    return useQuery({ ...getStaticContentOptions({ path: { path } }), staleTime: Infinity });
 }

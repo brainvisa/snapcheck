@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type React from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSnapServices } from '../../../api/snapServices';
 
 const ImageElementComponent: React.FC<{
@@ -33,12 +34,7 @@ const ImageElementComponent: React.FC<{
         return <div className="error-text">Image not found: {src}</div>;
     }
 
-    return imageUrl ? (
-        <img src={imageUrl} alt={src} style={style} />
-    ) : (
-        <div>Loading...</div>
-    );
+    return imageUrl ? <img src={imageUrl} alt={src} style={style} /> : <div>Loading...</div>;
 };
-
 
 export default ImageElementComponent;

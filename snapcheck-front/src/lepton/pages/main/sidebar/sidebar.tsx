@@ -1,13 +1,12 @@
-import React from 'react';
+import { usePatchField, useSnap } from '@api/snap';
 import type { BoardModel, RatingModel } from '@lepton/api-client';
-import InlineToggle from '../../../components/lib/inlineToggle';
-import FilesBrowser from '../../../components/files/browser/browser';
-import RatingInput from '../../../components/specials/ratinginput/ratinginput';
-import VerticalStackLayout, { type StackSection } from '../../../components/lib/layouts/verticalStackLayout';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
-import { useSnap, usePatchField } from '@api/snap';
+import React from 'react';
+import FilesBrowser from '../../../components/files/browser/browser';
+import InlineToggle from '../../../components/lib/inlineToggle';
+import VerticalStackLayout, { type StackSection } from '../../../components/lib/layouts/verticalStackLayout';
+import RatingInput from '../../../components/specials/ratinginput/ratinginput';
 import './sidebar.css';
-
 
 function boardHasRating(board: BoardModel, rating: RatingModel) {
     const allIntendedRatings = board.elements?.flatMap((el: any) => el.intended_ratings || []) || [];
@@ -23,13 +22,18 @@ const FilesControl: React.FC<{}> = () => {
     const [currentPath, setCurrentPath] = React.useState<string | null>(null);
     const { openLObject, setLObjectSetting } = useLObjectSession();
 
-    return <FilesBrowser
-        path={currentPath}
-        onPathChange={(p) => setCurrentPath(p)}
-        onFileSelect={(path: string) => { openLObject(path); setLObjectSetting("currentBoard", 0, path); }}
-        extensions={[".snpk"]}
-    />
-}
+    return (
+        <FilesBrowser
+            path={currentPath}
+            onPathChange={(p) => setCurrentPath(p)}
+            onFileSelect={(path: string) => {
+                openLObject(path);
+                setLObjectSetting('currentBoard', 0, path);
+            }}
+            extensions={['.snpk']}
+        />
+    );
+};
 
 const SnapControl: React.FC<{}> = () => {
     const { currentLObjectPath, currentObjectSettings } = useLObjectSession();
@@ -44,38 +48,45 @@ const SnapControl: React.FC<{}> = () => {
         patchField.mutate({ fieldPath: `ratings.{id:${id}}.${field}`, value });
     };
 
-    return <div className="snap-control-panel">
-        <div className="panel-header">
-            <div>
-                <InlineToggle
-                    off="Board" on="All"
-                    value={showAllratings}
-                    onChange={(value) => setShowAllRatings(value)} />
+    return (
+        <div className="snap-control-panel">
+            <div className="panel-header">
+                <div>
+                    <InlineToggle
+                        off="Board"
+                        on="All"
+                        value={showAllratings}
+                        onChange={(value) => setShowAllRatings(value)}
+                    />
+                </div>
+            </div>
+
+            <div className="ratings-list">
+                {snap?.id &&
+                    snap?.ratings
+                        ?.filter((rating) => currentBoard && (showAllratings || boardHasRating(currentBoard, rating)))
+                        .map((rating) => (
+                            <RatingInput
+                                key={rating.id}
+                                rating={rating}
+                                onChange={updateRatingField}
+                                highlight={
+                                    (showAllratings && !!currentBoard && boardHasRating(currentBoard, rating)) || false
+                                }
+                            />
+                        ))}
             </div>
         </div>
+    );
+};
 
-        <div className="ratings-list">
-            {snap?.id && (snap?.ratings?.filter((rating) => currentBoard && (showAllratings || boardHasRating(currentBoard, rating))).map((rating) => (
-                <RatingInput
-                    key={rating.id}
-                    rating={rating}
-                    onChange={updateRatingField}
-                    highlight={(showAllratings && !!currentBoard && boardHasRating(currentBoard, rating)) || false} />
-            )))}
-        </div>
-    </div>
-}
-
-const Sidebar: React.FC<{}> = ({ }) => {
+const Sidebar: React.FC<{}> = () => {
     const menuItems: StackSection[] = [
-        { id: "files", title: "Files", content: <FilesControl /> },
-        { id: "snap", title: "Ratings", content: <SnapControl /> },
+        { id: 'files', title: 'Files', content: <FilesControl /> },
+        { id: 'snap', title: 'Ratings', content: <SnapControl /> },
     ];
 
-    return (
-        <VerticalStackLayout sections={menuItems} height="100%">
-        </VerticalStackLayout>
-    );
+    return <VerticalStackLayout sections={menuItems} height="100%"></VerticalStackLayout>;
 };
 
 export default Sidebar;

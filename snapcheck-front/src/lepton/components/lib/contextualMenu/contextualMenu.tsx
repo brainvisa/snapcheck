@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import type React from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
-import './contextualMenu.css'
+import './contextualMenu.css';
 
 type ContextualMenuItemProps = {
     label: string;
@@ -13,30 +14,36 @@ type ContextualMenuItemProps = {
 export const ContextualMenuItem: React.FC<ContextualMenuItemProps> = ({ label, icon, onClick, items, style }) => {
     const [submenuVisible, setSubmenuVisible] = useState(false);
 
-    return <div
-        className="contextual-menu-item"
-        onMouseEnter={() => { if (items && items.length > 0) setSubmenuVisible(true); }}
-        onMouseLeave={() => { if (items && items.length > 0) setSubmenuVisible(false); }}
-        onClick={() => { if (!items && onClick) onClick(); }}
-        style={style}
-    >
-        {icon && <span className="icon">{icon}</span>}
-        <span className="label">{label}</span>
-        {Array.isArray(items) && items.length > 0 && (
-            <span className="submenu-arrow">▶</span>
-        )}
-        {submenuVisible && items && items.length > 0 && (
-            <div className="contextual-submenu" style={{ left: '100%', top: 0, position: 'absolute' }}>
-                {items.map((subItem, idx) => (
-                    <ContextualMenuItem key={idx} {...subItem} />
-                ))}
-            </div>
-        )}
-    </div>
-}
+    return (
+        <div
+            className="contextual-menu-item"
+            onMouseEnter={() => {
+                if (items && items.length > 0) setSubmenuVisible(true);
+            }}
+            onMouseLeave={() => {
+                if (items && items.length > 0) setSubmenuVisible(false);
+            }}
+            onClick={() => {
+                if (!items && onClick) onClick();
+            }}
+            style={style}
+        >
+            {icon && <span className="icon">{icon}</span>}
+            <span className="label">{label}</span>
+            {Array.isArray(items) && items.length > 0 && <span className="submenu-arrow">▶</span>}
+            {submenuVisible && items && items.length > 0 && (
+                <div className="contextual-submenu" style={{ left: '100%', top: 0, position: 'absolute' }}>
+                    {items.map((subItem, idx) => (
+                        <ContextualMenuItem key={idx} {...subItem} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 type ContextualMenuProps = {
-    items: ContextualMenuItemProps[]
+    items: ContextualMenuItemProps[];
     children: ReactNode;
     parentClass?: string | null;
     style?: React.CSSProperties;
@@ -87,19 +94,19 @@ export const ContextualMenu: React.FC<ContextualMenuProps> = ({ items, children,
             }
         }
         setVisible(false);
-    }
+    };
 
     return (
-        <div onContextMenu={handleContextMenu} >
+        <div onContextMenu={handleContextMenu}>
             {children}
             {visible && (
                 <div
                     ref={menuRef}
-                    className='contextual-menu'
+                    className="contextual-menu"
                     style={{
                         ...style,
                         top: position.y - 10,
-                        left: position.x - 10
+                        left: position.x - 10,
                     }}
                     onMouseLeave={handleMouseLeave}
                 >

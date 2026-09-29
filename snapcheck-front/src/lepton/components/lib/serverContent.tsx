@@ -1,5 +1,5 @@
-import React from 'react';
 import { useServerContent } from '@api/snap';
+import type React from 'react';
 
 type ServerContentProps = {
     path: string;
@@ -15,6 +15,7 @@ const ServerContent: React.FC<ServerContentProps> = ({ path, className }) => {
     return (
         <div
             className={className}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: static HTML content served by the backend
             dangerouslySetInnerHTML={{ __html: data.content }}
         />
     );

@@ -17,26 +17,28 @@ const API_URL_KEY = 'snapcheck.apiUrl';
  *  - the default backend URL
  */
 export function getApiUrl(): string {
-  const fromQuery = new URLSearchParams(window.location.search).get('api');
-  try {
-    if (fromQuery) {
-      sessionStorage.setItem(API_URL_KEY, fromQuery);
+    const fromQuery = new URLSearchParams(window.location.search).get('api');
+    try {
+        if (fromQuery) {
+            sessionStorage.setItem(API_URL_KEY, fromQuery);
+        }
+        return (
+            fromQuery || sessionStorage.getItem(API_URL_KEY) || import.meta.env.VITE_API_URL || 'http://localhost:8050'
+        );
+    } catch {
+        // sessionStorage may be unavailable
+        return fromQuery || import.meta.env.VITE_API_URL || 'http://localhost:8050';
     }
-    return fromQuery || sessionStorage.getItem(API_URL_KEY) || import.meta.env.VITE_API_URL || 'http://localhost:8050';
-  } catch {
-    // sessionStorage may be unavailable
-    return fromQuery || import.meta.env.VITE_API_URL || 'http://localhost:8050';
-  }
 }
 
 export function setApiToken(token: string | null): void {
-  currentToken = token;
+    currentToken = token;
 }
 
 export function configureApi(): void {
-  client.setConfig({
-    baseURL: getApiUrl(),
-    // Applied to every operation that declares the bearer security scheme.
-    auth: () => currentToken ?? undefined,
-  });
+    client.setConfig({
+        baseURL: getApiUrl(),
+        // Applied to every operation that declares the bearer security scheme.
+        auth: () => currentToken ?? undefined,
+    });
 }
