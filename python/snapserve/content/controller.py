@@ -1,3 +1,5 @@
+"""Route to get the static content of the GUI (HTML pages like About)."""
+
 import os.path as op
 from os.path import commonpath, realpath
 
@@ -12,6 +14,7 @@ router = APIRouter()
 
 @router.get("/{path:path}", response_model=ContentModel)
 def get_static_content(path: str, session=Depends(get_session_from_token)) -> ContentModel:
+    """Get a static HTML page of the GUI (ex: `about.html`)."""
     try:
         f = realpath(op.join(CONTENT_DIR, path))
         content_dir_real = realpath(CONTENT_DIR)

@@ -1,3 +1,5 @@
+"""Boards: the pages of a snap."""
+
 from dataclasses import dataclass, field
 
 from lepton_common.objects import Serializable
@@ -8,6 +10,23 @@ from snapcheck.snap.rating import Rating
 
 @dataclass
 class Board(Serializable, HTMLRenderable):
+    """A page of a snap: a set of elements displayed together.
+
+    The reviewer goes through the boards one by one and fills in the ratings intended by their
+    elements.
+
+    Parameters
+    ----------
+    title : str
+        Title of the board, displayed in the list of the boards.
+    description : str
+        Instructions for the reviewer.
+    style : dict of str
+        CSS style of the board (ex: ``{"gap": "8px"}``).
+    elements : list of AbstractElement
+        The graphical elements of the board, displayed in this order.
+    """
+
     title: str = "Untitled Board"
     description: str = ""
 
@@ -17,7 +36,7 @@ class Board(Serializable, HTMLRenderable):
 
     @property
     def all_intended_ratings(self) -> list[Rating]:
-        """Return the list of all ratings intended by the board elements"""
+        """The ratings intended by the elements of the board, without duplicates."""
         ratings = []
         for el in self.elements:
             for r in el.intended_ratings:
@@ -40,6 +59,7 @@ class Board(Serializable, HTMLRenderable):
         return sidebar
 
     def get_html_content(self) -> str:
+        """Return the HTML of the board content: a sidebar with the ratings and the elements."""
         content_html = "".join(
             item.to_html() if isinstance(item, HTMLRenderable) else str(item) for item in self.elements
         )
@@ -54,6 +74,18 @@ class Board(Serializable, HTMLRenderable):
         return html
 
     def to_html(self, save_path: str | None = None) -> str:
+        """Render the board as HTML.
+
+        Parameters
+        ----------
+        save_path : str or None
+            If given, the HTML is also written in this file.
+
+        Returns
+        -------
+        str
+            The HTML of the board.
+        """
         # Forward additional rendering options (e.g., fill_missing) and ensure title
         html = super().to_html(title=self.title, _style=self.style)
 

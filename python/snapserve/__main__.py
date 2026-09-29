@@ -1,3 +1,5 @@
+"""Run the backend: ``python -m snapserve [--host HOST] [--port PORT] [--secret SECRET] [--session ID]``."""
+
 import argparse
 import os
 
@@ -6,6 +8,7 @@ from snapserve.app import app
 
 
 def main():
+    """Parse the command line and serve the API with uvicorn."""
     parser = argparse.ArgumentParser(
         description="Run the SnapServe server",
         epilog="Additional origins allowed to call the API (CORS) can be given with $SNAP_ALLOW_ORIGINS "

@@ -1,3 +1,9 @@
+"""Elements: the graphical items displayed in the boards (images, texts, rows...).
+
+The elements are pydantic models, discriminated by their ``type`` field. :data:`ElementUnion`
+lists the types that can be used in a board.
+"""
+
 import os.path as op
 import shutil
 from collections.abc import Iterable
@@ -5,40 +11,65 @@ from dataclasses import field
 from typing import Literal, Union
 from warnings import warn
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from snapcheck.core.renderable import HTMLRenderable
 from snapcheck.snap.annotation import Annotation
 from snapcheck.snap.rating import Rating
 
 
 class AbstractElement(BaseModel, HTMLRenderable):
+    """Base class of the elements."""
+
+    model_config = ConfigDict(use_attribute_docstrings=True)
+
     type: Literal["unknown"] = "unknown"
+    """Type of the element, used to deserialize it and to choose how the GUI displays it."""
     title: str | None = None
-    style: dict[str, str] = field(default_factory=dict)  # Element CSS style
-    intended_ratings: list[Rating] = field(default_factory=list)  # List of rating IDs
+    """Title of the element (alternative text of the images in the HTML export)."""
+    style: dict[str, str] = field(default_factory=dict)
+    """CSS style of the element."""
+    intended_ratings: list[Rating] = field(default_factory=list)
+    """The ratings to fill in by looking at this element. They must also be in the ratings of the
+    snap."""
     annotations: list[Annotation] = field(default_factory=list)
+    """Annotations drawn over the element."""
 
     def get_html_content(self):
+        """Return the HTML of the element content."""
         return "?"
 
     def to_html(self):
+        """Render the element as HTML."""
         return super().to_html(_style=self.style)
 
 
 class Element(AbstractElement):
+    """A generic element displaying a content: a text, HTML or other elements."""
+
     type: Literal["default"] = "default"
     content: Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]] = None
+    """The content to display: a text, an element or a list of them. The application displays the
+    texts as is, the HTML export inserts them in the page (they can contain HTML)."""
 
     def get_html_content(self) -> str:
+        """Return the content of the element."""
         return self.content
 
 
 class RowElement(Element):
+    """Display several elements side by side.
+
+    A row behaves like a list of its content: it can be iterated, indexed and modified with
+    ``append``, ``extend``, ``insert``, ``remove``, ``pop``...
+    """
+
     type: Literal["row"] = "row"
     style: dict = field(default_factory=lambda: {"display": "flex"})
+    """CSS style of the row, ``{"display": "flex"}`` by default."""
     content: list[Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]]] = field(
         default_factory=list
     )
+    """The elements of the row, displayed from left to right."""
 
     def __len__(self):
         return len(self.content)
@@ -90,9 +121,18 @@ class RowElement(Element):
 
 
 class FileElement(AbstractElement):
+    """An element displaying a file.
+
+    When the snap is saved, the file is copied in the snap archive and :attr:`src` becomes
+    relative to the archive (:attr:`is_local` is then True).
+    """
+
     type: Literal["file"] = "file"
     is_local: bool = False
+    """True when the source path is relative to the snap archive."""
     src: str = ""
+    """Path of the file. Relative paths are relative to the current directory when the snap is
+    saved."""
 
     def __post_init__(self):
         if not self.is_local:
@@ -101,11 +141,21 @@ class FileElement(AbstractElement):
             self.src = op.abspath(self.src)
 
     def export_to_local(self, root_dir, subdir: str, source_tracker: dict | None = None):
-        """Copy the file to the target directory and update the path.
-        Target directory will be created if it does not exist.
-        If a file with the same name already exists, a suffix is added.
-        If source_tracker is given, avoid to copy several time the same file
-        dir_path is attempted to be relative to parent file (like Snap)
+        """Copy the file in a directory and make :attr:`src` relative to it.
+
+        Used when saving a snap. If the file does not exist, :attr:`src` is emptied and a warning
+        is emitted.
+
+        Parameters
+        ----------
+        root_dir : str
+            Root directory, :attr:`src` becomes relative to it.
+        subdir : str
+            Sub-directory of ``root_dir`` where the file is copied. It is created if needed. If a
+            file with the same name already exists, a numeric suffix is added.
+        source_tracker : dict or None
+            Files already copied (source path: new relative path), to copy each file only once.
+            It is updated with the copied file.
         """
 
         if not op.isfile(self.src):
@@ -140,18 +190,34 @@ class FileElement(AbstractElement):
 
 
 class ImageElement(FileElement):
+    """An image (PNG, JPEG, GIF, SVG...)."""
+
     type: Literal["image"] = "image"
 
     def get_html_content(self) -> str:
+        """Return an ``<img>`` tag displaying the image."""
         return f"<img src='{self.src}' alt='{self.title or ''}' />"
 
 
 # Union of all element types
 ElementUnion = ImageElement | FileElement | RowElement | Element
+"""The element types that can be used in a board."""
 
 
 def list_elements(item: list | ElementUnion) -> list[ElementUnion]:
-    """Recursively list all elements in an element or list of elements."""
+    """List recursively the elements of an element or of a list of elements.
+
+    Parameters
+    ----------
+    item : list or element
+        An element (its content is also listed, for example the elements of a row) or a list of
+        elements.
+
+    Returns
+    -------
+    list of element
+        A flat list of the elements.
+    """
     elements = []
 
     if isinstance(item, AbstractElement):

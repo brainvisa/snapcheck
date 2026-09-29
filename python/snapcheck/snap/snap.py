@@ -1,3 +1,14 @@
+"""The snap object and the snap files (``.snpk``).
+
+A ``.snpk`` file is a zip archive containing:
+
+- ``<name>.json``: the snap serialized in JSON, with its ratings, boards and elements;
+- ``content/``: a copy of the files displayed by the elements (images...), each file being
+  copied only once.
+
+Use :meth:`Snap.save` and :func:`load_snap` to write and read them.
+"""
+
 import json
 import os.path as op
 import shutil
@@ -19,20 +30,50 @@ from xhtml2pdf import pisa
 
 
 def html_to_pdf(html_string, output_path):
+    """Convert an HTML string to a PDF file (with xhtml2pdf)."""
     with open(output_path, "w+b") as pdf_file:
         pisa.CreatePDF(html_string, dest=pdf_file)
 
 
 def prettify_html(html_string: str) -> str:
-    """Prettify the HTML string for better readability."""
+    """Indent an HTML string to make it readable."""
     soup = bs(html_string, "html.parser")
     return soup.prettify()
 
 
 @dataclass
 class Snap(LObject):
-    """
-    A Snap represents a collection of boards, ratings, and associated metadata.
+    """A quality control document: boards to review and the ratings to fill in.
+
+    Parameters
+    ----------
+    title : str or None
+        Title of the snap.
+    description : str or None
+        Description of the snap (ex: the subject and the processing it controls).
+    metadata : dict
+        Free metadata (ex: study, subject, visit...).
+    ratings : list of Rating
+        All the ratings of the snap. The ratings intended by the elements of the boards must be in
+        this list.
+    boards : list of Board
+        The boards to review, in this order.
+    global_comment : str
+        General comment of the reviewer.
+
+    Examples
+    --------
+    Create a snap with one board, save it and read it again:
+
+    >>> from snapcheck.snap import Board, ImageElement, Snap, load_snap
+    >>> from snapcheck.snap.rating import Rating
+    >>> rating = Rating(name="Image quality")
+    >>> board = Board(title="Images", elements=[ImageElement(src="image.png", intended_ratings=[rating])])
+    >>> snap = Snap(title="My QC", ratings=[rating], boards=[board])
+    >>> snap.save("my_qc.snpk")  # doctest: +SKIP
+    >>> snap = load_snap("my_qc.snpk")  # doctest: +SKIP
+
+    See the examples gallery for complete examples.
     """
 
     title: str | None = None
@@ -46,7 +87,7 @@ class Snap(LObject):
     _path: str | None = None
 
     def get_all_elements(self) -> list[AbstractElement]:
-        """Return a flat list of all elements in all boards, including those in rows."""
+        """Return a flat list of the elements of all the boards, including the elements in rows."""
         all_elements = []
         for board in self.boards:
             all_elements.extend(board.get_all_elements())
@@ -74,11 +115,25 @@ class Snap(LObject):
             rating.scale.check()
 
     def close(self):
-        """Remove temporary directory if set."""
+        """Remove the temporary directory where the loaded snap archive has been extracted."""
         if self._dir:
             self._dir.cleanup()
 
-    def update_rating(self, ratingId: str, value: any):
+    def update_rating(self, ratingId: str, value: int | None):
+        """Set the value of a rating.
+
+        Parameters
+        ----------
+        ratingId : str
+            Id of the rating.
+        value : int or None
+            The new value, a value of the rating scale.
+
+        Raises
+        ------
+        ValueError
+            If there is no rating with this id.
+        """
         with self.changing():
             for i, n in enumerate(self.ratings):
                 if n.id == ratingId:
@@ -88,6 +143,10 @@ class Snap(LObject):
                 raise ValueError(f"Note with ID '{ratingId}' not found.")
 
     def to_json(self, path: str):
+        """Serialize the snap in JSON, without the content files.
+
+        Use :meth:`save` to write a complete snap file.
+        """
         warn(
             "Using to_json() method on Snap object will only save metadata.\n"
             + "To also save the boards content, use the save() method"
@@ -95,6 +154,21 @@ class Snap(LObject):
         return super().to_json()
 
     def save(self, path: str | None = None):
+        """Save the snap in a ``.snpk`` file.
+
+        The files of the elements are copied in the archive and their paths become relative to it.
+
+        Parameters
+        ----------
+        path : str or None
+            Path of the ``.snpk`` file. By default, the file the snap has been loaded from or last
+            saved to.
+
+        Raises
+        ------
+        ValueError
+            If no path is given and the snap has never been saved.
+        """
         # By default keep the same path
         if path is None:
             if self._filepath is None:
@@ -151,6 +225,23 @@ class Snap(LObject):
         return header
 
     def export_to_html(self, save_path: str | None = None, compress: bool = False):
+        """Export the snap as a static website: a page per board and an index page.
+
+        The snap must have been loaded from a file (see :func:`load_snap`): the files of the
+        elements are copied from the extracted archive.
+
+        Parameters
+        ----------
+        save_path : str
+            Directory of the website, created if needed. The index page is ``00_INDEX.html``.
+        compress : bool
+            If True, also compress the directory in ``<save_path>.zip``.
+
+        Returns
+        -------
+        str
+            The path of the zip file if ``compress`` is True, else the directory.
+        """
         # Create the ouput directory
         makedirs(save_path, exist_ok=True)
 
@@ -208,7 +299,15 @@ class Snap(LObject):
         return save_path
 
     def export_to_pdf(self, path: str):
-        """Export the Snap object to a PDF file."""
+        """Export the snap to a PDF file: the home page, then a page per board.
+
+        The snap must have been loaded from a file (see :meth:`export_to_html`).
+
+        Parameters
+        ----------
+        path : str
+            Path of the PDF file.
+        """
         # Export as HTML in a temporary directory
         tmp_dir = tempfile.TemporaryDirectory(prefix="snapcheck_snap_pdf_")
         html_dir = op.join(tmp_dir.name, "html")
@@ -238,7 +337,23 @@ class Snap(LObject):
 
 
 def new_infered_snap(path: str) -> Snap:
-    """Create a new Snap object with default values."""
+    """Create a snap displaying a single file, to open an image directly in the GUI.
+
+    Parameters
+    ----------
+    path : str
+        Path of an image (JPEG, PNG, GIF, BMP, TIFF, SVG or WebP).
+
+    Returns
+    -------
+    Snap
+        An untitled snap with a single board displaying the image.
+
+    Raises
+    ------
+    OSError
+        If the file is not a supported image.
+    """
     # Check if the path is an image file (jpg, png, gif, bmp, tiff)
     image_extensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp"]
     if any(path.lower().endswith(ext) for ext in image_extensions):
@@ -258,15 +373,29 @@ def new_infered_snap(path: str) -> Snap:
 
 
 def load_snap(path: str) -> Snap:
-    """Load a Snap object from a .snpk archive.
+    """Load a snap from a ``.snpk`` file.
 
-    A .snpk is a zip containing a JSON file plus its content assets. The extracted
-    content is kept in a TemporaryDirectory referenced by ``snap._dir`` so it lives
-    exactly as long as the Snap is open (and is cleaned up by ``Snap.close()``).
+    The archive is extracted in a temporary directory, kept as long as the snap is open and
+    removed by :meth:`Snap.close`. If the file is not a snap archive but an image, a snap
+    displaying this image is created (see :func:`new_infered_snap`).
 
-    If ``path`` is not a snap archive at all (e.g. a raw image opened directly),
-    fall back to inferring a snap from that file. Genuine corruption of a snap
-    archive (bad JSON, invalid structure) is raised, not silently swallowed.
+    Parameters
+    ----------
+    path : str
+        Path of the ``.snpk`` file (or of an image).
+
+    Returns
+    -------
+    Snap
+        The loaded snap.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the archive does not contain a JSON file.
+    ValueError
+        If the snap is invalid (ex: a board uses a rating which is not in
+        :attr:`Snap.ratings <snapcheck.snap.snap.Snap>`).
     """
     tmp_dir = tempfile.TemporaryDirectory(prefix="snapcheck_snap_load_")
     try:
@@ -297,12 +426,12 @@ def load_snap(path: str) -> Snap:
 
 
 def save_snap(snap: Snap, path: str):
-    """Save a Snap object to a JSON file"""
+    """Save a snap in a ``.snpk`` file, see :meth:`Snap.save`."""
     snap.save(path)
 
 
 def new_snap(path: str) -> Snap:
-    """Create a new Snap object with default values."""
+    """Create an empty snap, which will be saved in ``path``."""
     snap = Snap()
     snap._filepath = path
     return snap

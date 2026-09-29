@@ -1,8 +1,8 @@
 .. _general_examples:
 
-Examples Gallery
-================
+========
+Examples
+========
 
-.. contents:: Contents
-   :local:
-   :depth: 3
+Examples of the :mod:`snapcheck` python package: create snaps, read their ratings once reviewed and
+export them. They use the images of the ``examples/test_data`` directory of the repository.

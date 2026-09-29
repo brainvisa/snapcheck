@@ -1,3 +1,5 @@
+"""HTML rendering, used to export the snaps as HTML and PDF."""
+
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
@@ -5,14 +7,25 @@ from typing import Any
 
 @dataclass
 class HTMLRenderable:
-    """Mixin class to provide HTML rendering capability."""
+    """Mixin class to render an object as HTML.
+
+    The subclasses define the content with :meth:`get_html_content`, :meth:`to_html` wraps it in a
+    ``<div>``.
+    """
 
     def get_html_content(self) -> Any:
         """Provide the content to be rendered inside the HTML element."""
         return ""
 
     def to_html(self, _style=None, _classes=None, _id=None, _template=None, **kwargs) -> str:
-        """Generate an HTML representation of the element."""
+        """Render the object as HTML.
+
+        Returns
+        -------
+        str
+            The content of :meth:`get_html_content` in a ``<div>``. The content can be a string,
+            an HTMLRenderable or a list of them.
+        """
         html = "<div"
         if _id:
             html += f" id='{self.html_id}'"

@@ -1,9 +1,12 @@
+"""Paths and default values of the client."""
+
 import os.path as op
 
 from PyQt5.QtGui import QIcon
 
 
 def make_icon(path: str) -> QIcon:
+    """Create a Qt icon from an image file."""
     icon = QIcon()
     icon.addFile(path)
     return icon

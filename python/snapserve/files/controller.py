@@ -1,3 +1,5 @@
+"""Route to browse the directories of the server (used by the file browser of the GUI)."""
+
 import os.path as op
 from os import listdir
 from os.path import realpath
@@ -18,6 +20,11 @@ def list_directory(
     session=Depends(get_session_from_token),
     app=Depends(get_lepton_app),
 ):
+    """List a directory of the server: its sub-directories, then its files.
+
+    Without `path`, the directory set in the `files.default_path` setting is listed. If
+    `extensions` is given, only the files with one of these extensions are listed.
+    """
     if path is None:
         path = app.settings.get("files.default_path").value
 

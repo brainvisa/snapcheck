@@ -1,3 +1,5 @@
+"""Snap specific routes, added to the Lepton object routes (``/objects``)."""
+
 import mimetypes
 import os.path as op
 import shutil
@@ -12,6 +14,8 @@ from starlette.background import BackgroundTask
 
 
 class SnapRouter(CRUDRouter):
+    """Router of the snaps: the Lepton object routes plus the images and the exports."""
+
     def __init__(self, store: SessionStore):
         super().__init__(store)
         self.add_api_route("/{snap_id}/image/{src:path}", self.get_image, methods=["GET"])
@@ -25,6 +29,11 @@ class SnapRouter(CRUDRouter):
         )
 
     def get_image(self, snap_id: str, src: str, session=Depends(get_session_from_token)):
+        """Get a file displayed by an element of an opened snap.
+
+        `src` is the path of the file in the snap archive (the `src` of the element). The files
+        outside of the archive can not be accessed.
+        """
         from os.path import commonpath, realpath
 
         item = self.store.get_by_id(snap_id)
@@ -62,19 +71,21 @@ class SnapRouter(CRUDRouter):
         )
 
     def export_as_html(self, snap_id: str, path: str):
+        """Export an opened snap as a static website, in the `path` directory of the server."""
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")
         item.object.export_to_html(Path(path))
 
     def export_as_pdf(self, snap_id: str, path: str):
+        """Export an opened snap as a PDF file, in `path` on the server."""
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")
         item.object.export_to_pdf(Path(path))
 
     def download_as_html(self, snap_id: str, session=Depends(get_session_from_token)):
-        """Export as HTML in a temporary directory, zip it and stream the zip."""
+        """Download an opened snap exported as a static website, in a zip file."""
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")
@@ -91,7 +102,7 @@ class SnapRouter(CRUDRouter):
         )
 
     def download_as_pdf(self, snap_id: str, session=Depends(get_session_from_token)):
-        """Export as PDF in a temporary directory and stream the PDF."""
+        """Download an opened snap exported as a PDF file."""
         item = self.store.get_by_id(snap_id)
         if not item:
             raise HTTPException(status_code=404, detail="Snap not found")

@@ -1,97 +1,112 @@
 """
-.. _demo_mni:
+.. _example_create_snap:
 
-==============================================================================
-Create a test SNAP file for MNI template
-==============================================================================
+=============
+Create a snap
+=============
+
+Create a snap to check views of the MNI template: a rating scale, the ratings to fill in, two
+boards displaying the images, then save it in a ``.snpk`` file to review it in the application.
 """
 
-from snapcheck.snap import Board, Snap
-from snapcheck.snap.annotation import ArrowAnnotation
-from snapcheck.snap.elements import ImageElement
+# %%
+# The images to review
+# --------------------
+# In a real pipeline, the images are the figures produced by the processing. This example uses
+# the images of the ``test_data`` directory, next to the examples.
+
+import tempfile
+import zipfile
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+from matplotlib.image import imread
+from snapcheck.snap import Board, ImageElement, Snap
 from snapcheck.snap.rating import Rating, RatingScale, RatingScaleItem
-from snapcheck.snap.snap import load_snap
 
-colors = ["#330C00", "#5f3c00", "#5A5400", "#364900"]
+try:
+    DATA_DIR = Path(__file__).parent / "test_data"
+except NameError:  # The documentation build runs the examples from their directory
+    DATA_DIR = Path("test_data")
 
-generic_scale = RatingScale(
-    description="Quality Rating",
+images = {view: DATA_DIR / f"mni_{view}.png" for view in ("axial", "coronal", "lightbox")}
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 3.5), width_ratios=[1, 1, 1.7])
+for ax, (view, path) in zip(axes, images.items(), strict=True):
+    ax.imshow(imread(path))
+    ax.set_title(view)
+    ax.axis("off")
+plt.show()
+
+# %%
+# The rating scale
+# ----------------
+# A scale lists the levels the reviewer chooses from. Each level has a name, a value (stored in
+# the rating once chosen) and a color, used to display it in the application.
+
+scale = RatingScale(
+    description="Quality",
     ratings=[
-        RatingScaleItem(name="Too bad", value=0, description="", color=colors[0]),
-        RatingScaleItem(name="Bad", value=1, description="", color=colors[1]),
-        RatingScaleItem(
-            name="Good",
-            value=2,
-            description="",
-            color=colors[2],
-        ),
-        RatingScaleItem(name="Perfect", value=3, description="", color=colors[3]),
+        RatingScaleItem(name="Too bad", value=0, description="Unusable", color="#330C00"),
+        RatingScaleItem(name="Bad", value=1, description="Usable with care", color="#5f3c00"),
+        RatingScaleItem(name="Good", value=2, description="Minor defects", color="#5A5400"),
+        RatingScaleItem(name="Perfect", value=3, description="No defect", color="#364900"),
     ],
 )
+scale.check()  # Raises an error if two levels have the same name or value
 
+# %%
+# The ratings
+# -----------
+# A rating is a question to answer. Its ``id`` is generated from its name when it is not given.
+# A rating without scale only collects a comment.
 
-###########################
-# Axial and Coronal board #
-###########################
-first_board = Board(
-    title="Axial & Coronal Views",
-    description=".",
+axial = Rating(name="Axial view", description="Quality of the axial view", scale=scale)
+coronal = Rating(name="Coronal view", description="Quality of the coronal view", scale=scale)
+lightbox = Rating(name="Lightbox", description="Quality of the slices of the lightbox", scale=scale)
+observations = Rating(name="Observations", description="General observations")
+
+print(axial.id, coronal.id, lightbox.id, observations.id)
+
+# %%
+# The boards
+# ----------
+# A board is a page of the snap. Each element indicates the ratings to fill in by looking at it
+# (``intended_ratings``): the application highlights them when the board is displayed.
+
+views_board = Board(
+    title="Axial & coronal views",
+    description="Check the contrast and the orientation of the views.",
     elements=[
-        ImageElement(
-            title="Axial View",
-            src="./examples/test_data/mni_axial.png",
-            intended_ratings=[
-                Rating(id="coronal", name="Coronal", description="Quality of coronal view", scale=generic_scale)
-            ],
-        ),
-        ImageElement(
-            title="Coronal View",
-            src="./examples/test_data/mni_coronal.png",
-            intended_ratings=[
-                Rating(id="axial", name="Axial", description="Quality of axial view", scale=generic_scale)
-            ],
-        ),
+        ImageElement(title="Axial view", src=str(images["axial"]), intended_ratings=[axial]),
+        ImageElement(title="Coronal view", src=str(images["coronal"]), intended_ratings=[coronal]),
     ],
 )
-
-##################
-# Sagittal board #
-##################
-sag = ImageElement(
-    title="Sagittal View",
-    src="./examples/test_data/mni_lightbox.png",
-    intended_ratings=[
-        Rating(id="sagittal", name="Sagittal", description="Quality of sagittal view", scale=generic_scale)
-    ],
-)
-sag.annotations.append(ArrowAnnotation(x=150, y=200, width=50, length=0, color="blue", text="Check this area"))
-second_board = Board(
-    title="Sagittal View",
-    description="",
-    elements=[sag],
+lightbox_board = Board(
+    title="Lightbox",
+    description="Check all the slices.",
+    elements=[ImageElement(title="Lightbox", src=str(images["lightbox"]), intended_ratings=[lightbox])],
 )
 
+# %%
+# The snap
+# --------
+# The snap gathers all the ratings and the boards. The ratings intended by the elements must be
+# in the ratings of the snap. The metadata are free.
 
-##########################
-# Create Quality Control #
-##########################
-qc = Snap(
-    title="MNI Quality Check",
-    description="",
-    ratings=first_board.all_intended_ratings + second_board.all_intended_ratings,
-    boards=[first_board, second_board],
-    metadata={
-        "source": "MNI Template",
-        "version": "1.0",
-    },
+snap = Snap(
+    title="MNI template QC",
+    description="Visual check of the MNI template",
+    metadata={"template": "MNI152", "version": "1.0"},
+    ratings=[observations, *views_board.all_intended_ratings, *lightbox_board.all_intended_ratings],
+    boards=[views_board, lightbox_board],
 )
 
-f = ".local/mni.snpk"
-qc.save(f)
+output_dir = Path(tempfile.mkdtemp())
+snap_file = output_dir / "mni_qc.snpk"
+snap.save(str(snap_file))
+print(f"Snap saved in {snap_file}")
 
-qc_r = load_snap(f)
-
-qc_r.save(f)  # to test saving again
-
-qc_r.export_to_html(".local/demo_html_report")
-qc_r.export_to_pdf(".local/demo.pdf")
+# %%
+# Open it in the SnapCheck application to review it (see the :ref:`user guide <user_guide>`), or
+# read it with python (see :ref:`sphx_glr_auto_examples_plot_2_read_ratings.py`).

@@ -36,6 +36,11 @@ def wait_for_backend(process: subprocess.Popen, url: str, tries: int = 100, dela
 
 
 def main():
+    """Start the backend then the client, stop the backend when the client is closed.
+
+    This is the ``snapcheck`` command. Options: ``--host``, ``--backend-port``,
+    ``--frontend-port`` and ``--secret`` (default: ``$SNAP_SECRET``, or a random key).
+    """
     parser = argparse.ArgumentParser(description="Start the SnapCheck backend and GUI")
     parser.add_argument("--host", type=str, default=DEFAULT_URL, help="Host of the backend and frontend servers")
     parser.add_argument("--backend-port", type=int, default=DEFAULT_BACKEND_PORT, help="Port of the backend server")

@@ -1,3 +1,9 @@
+"""The Qt client: a frameless window displaying the frontend in a web view.
+
+From the sources, the frontend is served by the Vite development server. In the installed package,
+the built frontend (``snapclient/frontend``) is served by a small HTTP server in a thread.
+"""
+
 import argparse
 import atexit
 import os
@@ -21,6 +27,8 @@ from snapclient.constants import APP_ICON, DEFAULT_PORT, DEFAULT_URL, FRONT_PATH
 
 
 class BottomBar(qw.QWidget):
+    """Status bar at the bottom of the window."""
+
     def __init__(self):
         super().__init__()
         self.setContentsMargins(0, 0, 0, 0)
@@ -46,6 +54,19 @@ class BottomBar(qw.QWidget):
 
 
 class Bridge(QObject):
+    """Object exposed to the frontend with QWebChannel (``window.bridge`` in JavaScript).
+
+    The frontend calls its slots to get the JWT token and to control the frameless window
+    (close, minimize, maximize, move).
+
+    Parameters
+    ----------
+    win : MainWindow
+        The window to control.
+    jwt : str or None
+        Authentication token given to the frontend.
+    """
+
     _threshold_ms = 25.0
     _multiplier = 1.5
     _last_move_time = None
@@ -97,13 +118,20 @@ class Bridge(QObject):
 
 
 class MainWindow(qw.QMainWindow):
+    """The frameless window of the application, displaying the frontend in a web view."""
+
     url: str
     jwt: str
 
     def __init__(self, url: str, jwt: str | None = None):
-        """
-        Url: The URL to load in the web view.
-        JWT: Authentification token to be sent to the server.
+        """Create the window.
+
+        Parameters
+        ----------
+        url : str
+            URL of the frontend, loaded in the web view.
+        jwt : str or None
+            Authentication token given to the frontend (see :class:`Bridge`).
         """
         super().__init__()
         self.url = url
@@ -329,6 +357,12 @@ def start_static_server(host, port) -> ThreadingHTTPServer:
 
 
 def main(argv: list[str] | None = None):
+    """Start the client: serve the frontend and open the window.
+
+    Options: ``--host`` and ``--port`` of the frontend server, ``--api-url`` of the backend and
+    ``--jwt`` token. The backend must already be running, see :mod:`snapclient.launcher` to start
+    both.
+    """
     parser = argparse.ArgumentParser(description="SnapClient Application")
     parser.add_argument("--jwt", type=str, default=None, help="Authentification token.")
     parser.add_argument("--host", type=str, default=DEFAULT_URL, help="Host of the frontend server.")
