@@ -86,17 +86,15 @@ autodoc_mock_imports = ["PyQt5"]
 numpydoc_show_class_members = False
 numpydoc_class_members_toctree = False
 
-# Pydantic models: list the fields with their type, default value and documentation
+# Pydantic models: the fields are documented in the Attributes section of the class docstring, they
+# are not listed again (see also the :no-members: option in _templates/autosummary/module.rst)
+autodoc_pydantic_model_members = False
 autodoc_pydantic_model_show_json = False
 autodoc_pydantic_model_show_config_summary = False
 autodoc_pydantic_model_show_validator_summary = False
 autodoc_pydantic_model_show_validator_members = False
 autodoc_pydantic_model_show_field_summary = False
 autodoc_pydantic_model_member_order = "bysource"
-autodoc_pydantic_field_list_validators = False
-autodoc_pydantic_field_show_constraints = False
-# The fields docstrings are also their descriptions (use_attribute_docstrings): show them once
-autodoc_pydantic_field_doc_policy = "docstring"
 
 
 def list_pydantic_models() -> dict[str, list[str]]:

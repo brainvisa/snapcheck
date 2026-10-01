@@ -11,28 +11,35 @@ from dataclasses import field
 from typing import Literal, Union
 from warnings import warn
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from snapcheck.core.renderable import HTMLRenderable
 from snapcheck.snap.annotation import Annotation
 from snapcheck.snap.rating import Rating
 
 
 class AbstractElement(BaseModel, HTMLRenderable):
-    """Base class of the elements."""
+    """Base class of the elements.
 
-    model_config = ConfigDict(use_attribute_docstrings=True)
+    Attributes
+    ----------
+    type : str
+        Type of the element, used to deserialize it and to choose how the GUI displays it.
+    title : str or None
+        Title of the element (alternative text of the images in the HTML export).
+    style : dict
+        CSS style of the element.
+    intended_ratings : list of Rating
+        The ratings to fill in by looking at this element. They must also be in the ratings of the
+        snap.
+    annotations : list of Annotation
+        Annotations drawn over the element.
+    """
 
     type: Literal["unknown"] = "unknown"
-    """Type of the element, used to deserialize it and to choose how the GUI displays it."""
     title: str | None = None
-    """Title of the element (alternative text of the images in the HTML export)."""
     style: dict[str, str] = field(default_factory=dict)
-    """CSS style of the element."""
     intended_ratings: list[Rating] = field(default_factory=list)
-    """The ratings to fill in by looking at this element. They must also be in the ratings of the
-    snap."""
     annotations: list[Annotation] = field(default_factory=list)
-    """Annotations drawn over the element."""
 
     def get_html_content(self):
         """Return the HTML of the element content."""
@@ -44,12 +51,17 @@ class AbstractElement(BaseModel, HTMLRenderable):
 
 
 class Element(AbstractElement):
-    """A generic element displaying a content: a text, HTML or other elements."""
+    """A generic element displaying a content: a text, HTML or other elements.
+
+    Attributes
+    ----------
+    content : str, element, list or None
+        The content to display: a text, an element or a list of them. The application displays the
+        texts as is, the HTML export inserts them in the page (they can contain HTML).
+    """
 
     type: Literal["default"] = "default"
     content: Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]] = None
-    """The content to display: a text, an element or a list of them. The application displays the
-    texts as is, the HTML export inserts them in the page (they can contain HTML)."""
 
     def get_html_content(self) -> str:
         """Return the content of the element."""
@@ -61,15 +73,20 @@ class RowElement(Element):
 
     A row behaves like a list of its content: it can be iterated, indexed and modified with
     ``append``, ``extend``, ``insert``, ``remove``, ``pop``...
+
+    Attributes
+    ----------
+    style : dict
+        CSS style of the row, ``{"display": "flex"}`` by default.
+    content : list
+        The elements of the row, displayed from left to right.
     """
 
     type: Literal["row"] = "row"
     style: dict = field(default_factory=lambda: {"display": "flex"})
-    """CSS style of the row, ``{"display": "flex"}`` by default."""
     content: list[Union[str, "ElementUnion", None, list[Union["ElementUnion", str, None]]]] = field(
         default_factory=list
     )
-    """The elements of the row, displayed from left to right."""
 
     def __len__(self):
         return len(self.content)
@@ -125,14 +142,19 @@ class FileElement(AbstractElement):
 
     When the snap is saved, the file is copied in the snap archive and :attr:`src` becomes
     relative to the archive (:attr:`is_local` is then True).
+
+    Attributes
+    ----------
+    is_local : bool
+        True when the source path is relative to the snap archive.
+    src : str
+        Path of the file. Relative paths are relative to the current directory when the snap is
+        saved.
     """
 
     type: Literal["file"] = "file"
     is_local: bool = False
-    """True when the source path is relative to the snap archive."""
     src: str = ""
-    """Path of the file. Relative paths are relative to the current directory when the snap is
-    saved."""
 
     def __post_init__(self):
         if not self.is_local:

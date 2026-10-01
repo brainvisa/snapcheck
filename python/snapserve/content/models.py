@@ -1,14 +1,18 @@
 """API model of the static content."""
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class ContentModel(BaseModel):
-    """A static page."""
+    """A static page.
 
-    model_config = ConfigDict(use_attribute_docstrings=True)
+    Attributes
+    ----------
+    path : str
+        Path of the page.
+    content : str
+        HTML content of the page.
+    """
 
     path: str
-    """Path of the page."""
     content: str
-    """HTML content of the page."""

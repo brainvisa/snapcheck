@@ -48,6 +48,7 @@
 {% for item in classes %}
 {% if fullname ~ "." ~ item in pydantic_models %}
 .. autopydantic_model:: {{ item }}
+   :no-members:
 {% for method in pydantic_models[fullname ~ "." ~ item] %}
    .. automethod:: {{ method }}
 {% endfor %}
