@@ -48,25 +48,36 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
             <div className="rating-content">
                 <div>
                     <span className="rating-name">{name}</span>
-                    <select
-                        className="rating-select"
-                        value={selectedValue === undefined || selectedValue === null ? '' : String(selectedValue)}
-                        onChange={handleSelectChange}
-                        disabled={rating.scale == null}
-                        style={
-                            selectedRatingScale && selectedRatingScale.color
-                                ? { backgroundColor: selectedRatingScale.color }
-                                : {}
-                        }
-                    >
-                        <option value="">--</option>
-                        {rating.scale?.ratings &&
-                            rating.scale.ratings.map((nt: RatingScaleItem, idx: number) => (
-                                <option key={idx + 1} value={nt.value}>
-                                    {nt.value} - {nt.name}
-                                </option>
-                            ))}
-                    </select>
+                    { rating.is_boolean ? (
+                        <input type="checkbox" 
+                            checked={selectedValue === 1}
+                            onChange={(event) => {
+                                if (onChange) {
+                                    onChange(rating.id, 'value', event.target.checked ? 1 : 0);
+                                }
+                            }}
+                        />
+                        ) : (
+                        <select
+                            className="rating-select"
+                            value={selectedValue === undefined || selectedValue === null ? '' : String(selectedValue)}
+                            onChange={handleSelectChange}
+                            disabled={rating.scale == null}
+                            style={
+                                selectedRatingScale && selectedRatingScale.color
+                                    ? { backgroundColor: selectedRatingScale.color }
+                                    : {}
+                            }
+                        >
+                            <option value="">--</option>
+                            {rating.scale?.ratings &&
+                                rating.scale.ratings.map((nt: RatingScaleItem, idx: number) => (
+                                    <option key={idx + 1} value={nt.value}>
+                                        {nt.value} - {nt.name}
+                                    </option>
+                                ))}
+                        </select>
+                        )}
                 </div>
                 <div className="rating-second-line">
                     <input

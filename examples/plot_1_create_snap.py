@@ -100,6 +100,19 @@ snap = Snap(
     boards=[views_board, lightbox_board],
 )
 
+# %%
+# Global Boolean ratings
+# -----------------------
+# A rating can be also added globally to the Snap (without beeing used for any specific board). 
+# It can also be a boolean without any scale.
+bool_rating = Rating(name="Amazing", description="This snap is amazing", is_boolean=True)
+snap.ratings.append(bool_rating)
+
+print(*[rating.id for rating in snap.ratings])
+
+# %%
+# Save the Snap
+# -------------
 output_dir = Path(tempfile.mkdtemp())
 snap_file = output_dir / "mni_qc.snpk"
 snap.save(str(snap_file))

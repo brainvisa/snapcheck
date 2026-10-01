@@ -12,8 +12,8 @@ This guide explains how to review snaps with the SnapCheck application. To creat
    :depth: 1
 
 
-Install and start SnapCheck
-===========================
+Install and start SnapCheck (GUI)
+=================================
 
 SnapCheck is distributed as a conda package, ``snapclient``, published in a conda channel (a
 *forge*). Install it with `pixi <https://pixi.sh>`_:
