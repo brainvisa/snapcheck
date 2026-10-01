@@ -41,6 +41,29 @@ def prettify_html(html_string: str) -> str:
     return soup.prettify()
 
 
+# Fields filled in by the reviewer, the other fields of a rating are its definition
+_RATING_ANSWER_FIELDS = {"value", "comment"}
+
+
+def _check_same_rating(reference: Rating, rating: Rating):
+    """Check that ``rating`` can be replaced by ``reference``, the rating with the same id in the snap.
+
+    Raises
+    ------
+    ValueError
+        If the rating has no id.
+    """
+    if rating.id is None:
+        raise ValueError(f"A rating has no id, give it a name or an id: {rating!r}")
+    if rating is not reference and rating.model_dump(exclude=_RATING_ANSWER_FIELDS) != reference.model_dump(
+        exclude=_RATING_ANSWER_FIELDS
+    ):
+        warn(
+            f"Several ratings have the id '{rating.id}' but different definitions, only the first one is kept: "
+            f"{reference!r}"
+        )
+
+
 @dataclass
 class Snap(LObject):
     """A quality control document: boards to review and the ratings to fill in.
@@ -54,8 +77,9 @@ class Snap(LObject):
     metadata : dict
         Free metadata (ex: study, subject, visit...).
     ratings : list of Rating
-        All the ratings of the snap. The ratings intended by the elements of the boards must be in
-        this list.
+        All the ratings of the snap. The ratings intended by the elements of the boards are added
+        automatically, only the ratings that are not intended by an element have to be given (see
+        :meth:`link_ratings`).
     boards : list of Board
         The boards to review, in this order.
     global_comment : str
@@ -69,7 +93,7 @@ class Snap(LObject):
     >>> from snapcheck.snap.rating import Rating
     >>> rating = Rating(name="Image quality")
     >>> board = Board(title="Images", elements=[ImageElement(src="image.png", intended_ratings=[rating])])
-    >>> snap = Snap(title="My QC", ratings=[rating], boards=[board])
+    >>> snap = Snap(title="My QC", boards=[board])
     >>> snap.save("my_qc.snpk")  # doctest: +SKIP
     >>> snap = load_snap("my_qc.snpk")  # doctest: +SKIP
 
@@ -85,6 +109,46 @@ class Snap(LObject):
 
     _dir: tempfile.TemporaryDirectory | None = None
     _path: str | None = None
+
+    def __post_init__(self, *args, **kwargs):
+        # Also called after the deserialization (load and undo / redo)
+        super().__post_init__(*args, **kwargs)
+        self.link_ratings()
+
+    def link_ratings(self):
+        """Make the elements of the boards use the ratings of the snap.
+
+        The intended ratings of the elements are replaced by the rating of :attr:`ratings` that has
+        the same id, so that a rating is stored only once. The intended ratings that are not in
+        :attr:`ratings` are added to it, and the duplicates (same id) are removed from it.
+
+        It is called at the creation, at the loading and before saving the snap. Call it after
+        adding boards or elements to an existing snap, or after replacing ratings.
+
+        Raises
+        ------
+        ValueError
+            If a rating has no id (neither an id nor a name).
+
+        Warns
+        -----
+        UserWarning
+            If several ratings have the same id but different definitions (name, description,
+            scale...). The first one is kept: the ratings of :attr:`ratings`, then the ratings of
+            the elements in the order of the boards.
+        """
+        ratings_by_id: dict[str, Rating] = {}
+        for rating in self.ratings:
+            _check_same_rating(ratings_by_id.setdefault(rating.id, rating), rating)
+        self.ratings[:] = ratings_by_id.values()
+
+        for element in self.get_all_elements():
+            for i, rating in enumerate(element.intended_ratings):
+                if rating.id not in ratings_by_id:
+                    ratings_by_id[rating.id] = rating
+                    self.ratings.append(rating)
+                _check_same_rating(ratings_by_id[rating.id], rating)
+                element.intended_ratings[i] = ratings_by_id[rating.id]
 
     def get_all_elements(self) -> list[AbstractElement]:
         """Return a flat list of the elements of all the boards, including the elements in rows."""
@@ -106,7 +170,7 @@ class Snap(LObject):
                         break
                 else:
                     raise ValueError(
-                        f"Rating with #'{rating.id}' used by board '{board.title}' is not defined in the ratings list."
+                        f"Rating with #'{int_rating.id}' used by board '{board.title}' is not defined in the ratings list."
                     )
         checked_scales = []
         for rating in self.ratings:
@@ -134,13 +198,14 @@ class Snap(LObject):
         ValueError
             If there is no rating with this id.
         """
+        # Search the rating before changing the snap: a failed change restores the whole snap
+        for rating in self.ratings:
+            if rating.id == ratingId:
+                break
+        else:
+            raise ValueError(f"Rating with ID '{ratingId}' not found.")
         with self.changing():
-            for i, n in enumerate(self.ratings):
-                if n.id == ratingId:
-                    self.ratings[i].value = value
-                    break
-            else:
-                raise ValueError(f"Note with ID '{ratingId}' not found.")
+            rating.value = value
 
     def to_json(self, path: str):
         """Serialize the snap in JSON, without the content files.
@@ -196,6 +261,7 @@ class Snap(LObject):
             el.export_to_local(tmp_dir.name, "content", source_tracker)
 
         # Save the JSON file
+        self.link_ratings()
         super().to_json(js_f)
 
         # Compress all together
@@ -394,8 +460,7 @@ def load_snap(path: str) -> Snap:
     FileNotFoundError
         If the archive does not contain a JSON file.
     ValueError
-        If the snap is invalid (ex: a board uses a rating which is not in
-        :attr:`Snap.ratings <snapcheck.snap.snap.Snap>`).
+        If the snap is invalid (ex: two levels of a rating scale have the same value).
     """
     tmp_dir = tempfile.TemporaryDirectory(prefix="snapcheck_snap_load_")
     try:

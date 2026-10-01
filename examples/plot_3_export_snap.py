@@ -44,7 +44,7 @@ boards = [
 ]
 
 output_dir = Path(tempfile.mkdtemp())
-Snap(title="MNI template QC", ratings=[axial, lightbox], boards=boards).save(str(output_dir / "mni_qc.snpk"))
+Snap(title="MNI template QC", boards=boards).save(str(output_dir / "mni_qc.snpk"))
 
 snap = load_snap(str(output_dir / "mni_qc.snpk"))
 

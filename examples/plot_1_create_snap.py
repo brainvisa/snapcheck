@@ -16,7 +16,6 @@ boards displaying the images, then save it in a ``.snpk`` file to review it in t
 # the images of the ``test_data`` directory, next to the examples.
 
 import tempfile
-import zipfile
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -98,7 +97,6 @@ snap = Snap(
     title="MNI template QC",
     description="Visual check of the MNI template",
     metadata={"template": "MNI152", "version": "1.0"},
-    ratings=[observations, *views_board.all_intended_ratings, *lightbox_board.all_intended_ratings],
     boards=[views_board, lightbox_board],
 )
 

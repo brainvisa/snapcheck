@@ -42,7 +42,19 @@ client = [
     "PyQt5>=5.15,<6",
     "PyQtWebEngine>=5.15,<6",
 ]
-doc = ["sphinx >=1.0", "sphinx-rtd-theme"]
+# fastapi.testclient needs httpx
+test = ["pytest", "httpx"]
+doc = [
+    "sphinx",
+    "sphinx-gallery",
+    "sphinx_bootstrap_theme",
+    "numpydoc",
+    "sphinxcontrib-fulltoc",
+    "sphinxcontrib-openapi",
+    "autodoc-pydantic",
+    # For the examples of the gallery
+    "matplotlib",
+]
 
 [project.urls]
 homepage = "http://brainvisa.github.io/snapcheck/"
@@ -74,8 +86,14 @@ py2puml = ">=0.9.1,<0.10"
 xhtml2pdf = ">=0.2.16,<0.3"
 pypdf = ">=6.6.0,<7"
 
+# For the GUI ("client" extra), from conda-forge rather than PyPI for the Qt libraries
+pyqtwebengine = "<6"
+fastapi = ">=0.115"
+requests = ">=2.32,<3"
+
 # For the tests
 pytest = ">=9.0.2,<10"
+httpx = "*"
 
 # For the doc
 sphinx = ">=8.2,<10"
@@ -92,9 +110,10 @@ asgi-correlation-id = ">=5.0.1,<6"
 
 
 [tool.pixi.pypi-dependencies]
-snapcheck = { path = ".", editable = true }
-# lepton_common is not on PyPI
+snapcheck = { path = ".", editable = true, extras = ["client", "test"] }
+# lepton_common and lepton-app are not on PyPI
 lepton_common = { git = "https://github.com/cati-neuroimaging/lepton-common.git" }
+lepton-app = { git = "https://github.com/cati-neuroimaging/lepton.git" }
 
 [tool.ruff]
 line-length = 120

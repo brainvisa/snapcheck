@@ -44,8 +44,9 @@ class TestSnap:
         element = Element(intended_ratings=[rating2])
         board = Board(title="Board", elements=[element])
 
-        # rating2 is used in board but not defined in snap.ratings
-        snap = Snap(ratings=[rating1], boards=[board])
+        # rating2 is used in a board added after the creation, without calling link_ratings()
+        snap = Snap(ratings=[rating1])
+        snap.boards.append(board)
 
         with pytest.raises(ValueError, match="is not defined in the ratings list"):
             snap._validate()
@@ -71,6 +72,89 @@ class TestSnap:
 
         with pytest.raises(ValueError, match="Duplicate rating name"):
             snap._validate()
+
+    def test_intended_ratings_are_added(self):
+        extra = Rating(id="extra", name="Extra")
+        rating = Rating(id="rating1", name="Quality")
+        board = Board(title="Board", elements=[Element(intended_ratings=[rating])])
+
+        snap = Snap(ratings=[extra], boards=[board])
+
+        assert snap.ratings == [extra, rating]
+
+    def test_intended_ratings_are_linked(self):
+        rating = Rating(id="rating1", name="Quality")
+        # A copy with the same id is replaced by the rating of the snap
+        element = Element(intended_ratings=[rating.model_copy()])
+        board = Board(title="Board", elements=[element])
+
+        snap = Snap(ratings=[rating], boards=[board])
+
+        assert element.intended_ratings[0] is rating
+        snap.update_rating("rating1", 2)
+        assert element.intended_ratings[0].value == 2
+
+    def test_intended_ratings_stay_linked_after_undo(self):
+        rating = Rating(id="rating1", name="Quality")
+        board = Board(title="Board", elements=[Element(intended_ratings=[rating]), Element(intended_ratings=[rating])])
+        snap = Snap(boards=[board])
+
+        snap.update_rating("rating1", 1)
+        snap.update_rating("rating1", 2)
+        snap.revert_changes()
+
+        elements = snap.boards[0].elements
+        assert elements[0].intended_ratings[0] is snap.ratings[0]
+        assert elements[1].intended_ratings[0] is snap.ratings[0]
+        assert snap.ratings[0].value == 1
+
+    def test_update_unknown_rating_keeps_the_snap(self):
+        rating = Rating(id="rating1", name="Quality")
+        board = Board(title="Board", elements=[Element(intended_ratings=[rating])])
+        snap = Snap(boards=[board])
+
+        with pytest.raises(ValueError, match="Rating with ID 'unknown' not found"):
+            snap.update_rating("unknown", 1)
+
+        # The snap has not been restored: the references to its objects are still valid
+        assert snap.boards[0] is board
+        assert snap.ratings[0] is rating
+
+    def test_link_ratings_without_id(self):
+        board = Board(title="Board", elements=[Element(intended_ratings=[Rating()])])
+
+        with pytest.raises(ValueError, match="has no id"):
+            Snap(boards=[board])
+
+    def test_link_ratings_same_id_different_definitions(self):
+        axial = Rating(name="Quality", description="Axial view")
+        coronal = Rating(name="Quality", description="Coronal view")
+        element = Element(intended_ratings=[coronal])
+        board = Board(title="Board", elements=[element])
+
+        with pytest.warns(UserWarning, match="Several ratings have the id 'quality'"):
+            snap = Snap(ratings=[axial], boards=[board])
+
+        assert snap.ratings == [axial]
+        assert element.intended_ratings[0] is axial
+
+    def test_link_ratings_removes_duplicates(self):
+        rating = Rating(id="rating1", name="Quality")
+
+        snap = Snap(ratings=[rating, rating.model_copy()])
+
+        assert snap.ratings == [rating]
+        assert len(snap.ratings) == 1
+
+    def test_link_ratings_after_replacing_a_rating(self):
+        rating = Rating(id="rating1", name="Quality")
+        element = Element(intended_ratings=[rating])
+        snap = Snap(boards=[Board(title="Board", elements=[element])])
+
+        snap.ratings[0] = Rating(id="rating1", name="Quality", value=1)
+        snap.link_ratings()
+
+        assert element.intended_ratings[0] is snap.ratings[0]
 
     def test_to_dict_without_compress(self):
         rating = Rating(name="Quality")
@@ -105,16 +189,8 @@ class TestSnap:
     def test_update_rating(self):
         rating = Rating(id="rating1", name="Quality", value=None)
         snap = Snap(ratings=[rating])
-
         snap.update_rating("rating1", 5)
-
         assert snap.ratings[0].value == 5
-
-    # def test_update_rating_not_found(self):
-    #     snap = Snap(ratings=[Rating(id="rating1", name="Quality")])
-
-    #     with pytest.raises(ValueError, match="Note with ID 'nonexistent' not found"):
-    #         snap.update_rating("nonexistent", 5)
 
     def test_close(self):
         snap = Snap()
@@ -128,19 +204,6 @@ class TestSnap:
 
         # Directory should be cleaned up
         assert not os.path.exists(dir_path)
-
-    # def test_to_json_warning(self):
-    #     snap = Snap(title="Test")
-
-    #     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-    #         temp_path = f.name
-
-    #     try:
-    #         with pytest.warns(UserWarning, match="will only save metadata"):
-    #             snap.to_json(temp_path)
-    #     finally:
-    #         if os.path.exists(temp_path):
-    #             os.unlink(temp_path)
 
 
 class TestSnapSaveLoad:
@@ -162,6 +225,22 @@ class TestSnapSaveLoad:
             assert loaded_snap.metadata == {"version": "1.0"}
             assert loaded_snap._filepath == save_path
 
+            loaded_snap.close()
+
+    def test_load_links_intended_ratings(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_path = os.path.join(tmpdir, "test.snap")
+            rating = Rating(id="rating1", name="Quality")
+            board = Board(
+                title="Board", elements=[Element(intended_ratings=[rating]), Element(intended_ratings=[rating])]
+            )
+            Snap(boards=[board]).save(save_path)
+
+            loaded_snap = load_snap(save_path)
+
+            elements = loaded_snap.boards[0].elements
+            assert elements[0].intended_ratings[0] is loaded_snap.ratings[0]
+            assert elements[1].intended_ratings[0] is loaded_snap.ratings[0]
             loaded_snap.close()
 
     # def test_save_and_load_with_boards_and_ratings(self):

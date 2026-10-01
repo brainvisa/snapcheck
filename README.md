@@ -85,20 +85,11 @@ qc = Snap(
     title="Tractométrie",
     description=f"Tractométrie du CST (Corticospinal Tract) pour le sujet {visit.subject}/{visit.visit}",
     metadata=visit.__dict__,
-    ratings=[
-        subject_observations,
-        b0_rating,
-        mni_registration_rating,
-        fa_rating,
-        md_rating,
-    ]
-    + bundles_ratings,
+    ratings=[a_rating_that_is_note_in_a_board],
     boards=[preproc_board, cst_board, metrics_board],
 )
 
-f = ".local/demo.snpk"
-# qc.to_json(f)
-qc.save(f)
+qc.save(".local/demo.snpk")
 ```
 
 

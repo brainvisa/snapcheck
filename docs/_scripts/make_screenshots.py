@@ -70,7 +70,7 @@ def create_demo_snaps(home: Path):
         ]
         snap = Snap(
             title=f"MNI template QC - {subject}",
-            ratings=[observations, axial, coronal, lightbox],
+            ratings=[observations],
             boards=boards,
         )
         snap.save(str(home / f"mni_qc_{subject}.snpk"))

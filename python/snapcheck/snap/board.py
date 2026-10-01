@@ -36,13 +36,13 @@ class Board(Serializable, HTMLRenderable):
 
     @property
     def all_intended_ratings(self) -> list[Rating]:
-        """The ratings intended by the elements of the board, without duplicates."""
-        ratings = []
-        for el in self.elements:
+        """The ratings intended by the elements of the board (including the elements in rows), without
+        duplicates (same id)."""
+        ratings = {}
+        for el in self.get_all_elements():
             for r in el.intended_ratings:
-                if r not in ratings:
-                    ratings.append(r)
-        return list(ratings)
+                ratings.setdefault(r.id, r)
+        return list(ratings.values())
 
     def get_all_elements(self) -> list[AbstractElement]:
         """Return a flat list of all elements in the board, including those in rows."""

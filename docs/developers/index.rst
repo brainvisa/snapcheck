@@ -9,6 +9,7 @@ Developer documentation
    :maxdepth: 2
 
    snapcheck
+   ratings
    snapserve
    rest_api
    frontend
@@ -41,6 +42,7 @@ The snaps are created with python scripts using the :mod:`snapcheck` package, th
 application.
 
 - :doc:`snapcheck`: the python package, and the :ref:`examples <general_examples>`.
+- :doc:`ratings`: how the ratings of a snap and of its elements are kept shared.
 - :doc:`snapserve`: the backend, and the :doc:`REST API reference <rest_api>`.
 - :doc:`frontend`: the GUI.
 - :doc:`../api/index`: the reference of the python packages.

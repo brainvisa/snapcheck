@@ -1,8 +1,9 @@
 import { usePatchField } from '@api/snap';
-import type { BoardModel } from '@lepton/api-client';
+import type { BoardModel, Rating } from '@lepton/api-client';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ContextualMenu } from '../../components/lib/contextualMenu/contextualMenu';
+import { getBoardIntendedRatings } from '../../utils/ratings';
 
 const DefaultElementComponent = React.lazy(() => import('../../components/elements/default'));
 const ImageElementComponent = React.lazy(() => import('../../components/elements/image'));
@@ -53,15 +54,17 @@ const renderElement = (snapId: string, element: any) => {
     }
 };
 
-const BoardElement: React.FC<{ snapId: string; board: BoardModel; element: any }> = ({ snapId, board, element }) => {
+const BoardElement: React.FC<{ snapId: string; intendedRatings: Rating[]; element: any }> = ({
+    snapId,
+    intendedRatings,
+    element,
+}) => {
     const { currentLObjectPath } = useLObjectSession();
     const patchField = usePatchField(currentLObjectPath, snapId);
 
-    const allIntendedRatings = board.elements?.flatMap((el: any) => el.intended_ratings || []) || [];
-
     const menuItems: any[] = [
         { label: 'Show this board in all files', onClick: () => console.log('Show this board in all views clicked') },
-        ...allIntendedRatings.map((rating: any) => ({
+        ...intendedRatings.map((rating: any) => ({
             label: rating.name,
             items: [
                 ...(rating.scale?.ratings?.map((rate: any) => ({
@@ -85,6 +88,7 @@ const BoardElement: React.FC<{ snapId: string; board: BoardModel; element: any }
 
 const Board: React.FC<{ snapId: string; board: BoardModel }> = ({ snapId, board }) => {
     const [boardElements, setBoardElements] = useState<any[]>([]);
+    const intendedRatings = useMemo(() => getBoardIntendedRatings(board), [board]);
 
     useEffect(() => {
         if (board.elements) {
@@ -96,7 +100,7 @@ const Board: React.FC<{ snapId: string; board: BoardModel }> = ({ snapId, board 
         <div className="board">
             {board.description && <p>{board.description}</p>}
             {boardElements.map((element, index) => (
-                <BoardElement key={index} snapId={snapId} board={board} element={element} />
+                <BoardElement key={index} snapId={snapId} intendedRatings={intendedRatings} element={element} />
             ))}
         </div>
     );

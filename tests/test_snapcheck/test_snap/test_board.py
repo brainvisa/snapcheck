@@ -4,7 +4,7 @@ import tempfile
 import pytest
 from snapcheck.snap.annotation import Annotation
 from snapcheck.snap.board import Board
-from snapcheck.snap.elements import Element, FileElement, ImageElement
+from snapcheck.snap.elements import Element, FileElement, ImageElement, RowElement
 from snapcheck.snap.rating import Rating
 
 
@@ -211,6 +211,15 @@ class TestBoard:
         # Should not duplicate the same rating instance
         assert len(ratings) == 1
         assert rating in ratings
+
+    def test_all_intended_ratings_in_rows(self):
+        rating1 = Rating(name="Quality")
+        rating2 = Rating(name="Accuracy")
+        row = RowElement(content=[Element(intended_ratings=[rating1]), Element(intended_ratings=[rating2])])
+
+        board = Board(title="Board", elements=[row])
+
+        assert board.all_intended_ratings == [rating1, rating2]
 
     def test_board_is_serializable(self):
         from lepton_common.objects import Serializable

@@ -1,22 +1,13 @@
 import { usePatchField, useSnap } from '@api/snap';
-import type { BoardModel, RatingModel } from '@lepton/api-client';
+import type { RatingModel } from '@lepton/api-client';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
 import React from 'react';
 import FilesBrowser from '../../../components/files/browser/browser';
 import InlineToggle from '../../../components/lib/inlineToggle';
 import VerticalStackLayout, { type StackSection } from '../../../components/lib/layouts/verticalStackLayout';
 import RatingInput from '../../../components/specials/ratinginput/ratinginput';
+import { boardHasRating } from '../../../utils/ratings';
 import './sidebar.css';
-
-function boardHasRating(board: BoardModel, rating: RatingModel) {
-    const allIntendedRatings = board.elements?.flatMap((el: any) => el.intended_ratings || []) || [];
-    for (const intendedRating of allIntendedRatings) {
-        if (intendedRating.id === rating.id) {
-            return true;
-        }
-    }
-    return false;
-}
 
 const FilesControl: React.FC<{}> = () => {
     const [currentPath, setCurrentPath] = React.useState<string | null>(null);

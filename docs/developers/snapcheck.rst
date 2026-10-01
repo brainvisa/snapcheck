@@ -41,8 +41,10 @@ The classes are available in :mod:`snapcheck.snap`:
 
 The elements indicate the ratings they are made to evaluate (``intended_ratings``): the GUI
 highlights the ratings of the current board and proposes them in the context menu of the elements.
-These ratings must also be in :attr:`Snap.ratings <snapcheck.snap.snap.Snap>`, the list of all the
-ratings of the snap. A rating can be shared by several elements, and a scale by several ratings.
+These ratings are added automatically to :attr:`Snap.ratings <snapcheck.snap.snap.Snap>`, the list
+of all the ratings of the snap, which holds the answers: only the ratings that are not intended by
+an element have to be given to the snap. A rating can be shared by several elements, and a scale by
+several ratings. See :doc:`ratings` for how they are kept shared.
 
 A minimal snap:
 
@@ -65,7 +67,7 @@ A minimal snap:
        description="Check the alignment of the image on the template.",
        elements=[ImageElement(title="Axial view", src="axial.png", intended_ratings=[rating])],
    )
-   snap = Snap(title="QC of subject S01", ratings=[rating], boards=[board], metadata={"subject": "S01"})
+   snap = Snap(title="QC of subject S01", boards=[board], metadata={"subject": "S01"})
    snap.save("S01.snpk")
 
 Once reviewed, read the ratings:

@@ -49,7 +49,7 @@ def create_snap(subject: str) -> Snap:
             ImageElement(title="Coronal", src=str(DATA_DIR / "mni_coronal.png"), intended_ratings=[coronal]),
         ],
     )
-    return Snap(title=f"QC of {subject}", metadata={"subject": subject}, ratings=[axial, coronal], boards=[board])
+    return Snap(title=f"QC of {subject}", metadata={"subject": subject}, boards=[board])
 
 
 study_dir = Path(tempfile.mkdtemp())
