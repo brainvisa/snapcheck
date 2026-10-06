@@ -1,0 +1,7 @@
+/* Adjustments of the bootstrap theme */
+.figure img, figure img { border: 1px solid #ddd; }
+table.docutils td, table.docutils th { padding: 4px 8px; }
+/* The links of the notes (ex: "Go to the end" in the examples) must be readable on their background */
+div.admonition a { color: inherit; text-decoration: underline; }
+/* The download buttons of the examples gallery must not overflow the page */
+div.sphx-glr-download code.download { white-space: normal; }
