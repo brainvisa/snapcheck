@@ -132,16 +132,16 @@ const TopBar: React.FC<{}> = () => {
                                     },
                                     disabled: !snap?.has_changed,
                                 },
-                                {
-                                    label: 'Save As...',
-                                    onClick: () => {
-                                        if (snap?.id) {
-                                            const p = prompt('Enter the save path:');
-                                            if (p) saveSnapAs.mutate({ snapId: snap.id, newPath: p });
-                                        }
-                                    },
-                                    disabled: !snap?.id,
-                                },
+                                // {
+                                //     label: 'Save As...',
+                                //     onClick: () => {
+                                //         if (snap?.id) {
+                                //             const p = prompt('Enter the save path:');
+                                //             if (p) saveSnapAs.mutate({ snapId: snap.id, newPath: p });
+                                //         }
+                                //     },
+                                //     disabled: !snap?.id,
+                                // },
                                 { label: 'Auto save', onClick: toggleAutosave, checked: autosave },
                                 { type: 'separator' },
                                 { label: 'Export to HTML', onClick: exportToHTML, disabled: !snap },
