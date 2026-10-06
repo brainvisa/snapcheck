@@ -5,7 +5,7 @@ import Menu from '../../../components/lib/menu/menu';
 import ServerContent from '../../../components/lib/serverContent';
 import { SnapSelector } from '../snapSelector';
 import './topbar.css';
-import { useSaveSnap, useSaveSnapAs, useSnap } from '@api/snap';
+import { useSaveSnap, useSaveSnapAs, useSetSetting, useSetting, useSnap } from '@api/snap';
 import { exportAsHtml } from '@lepton/api';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
 import { useAppUIState } from '../../../../contexts/AppUIStateContext';
@@ -21,6 +21,8 @@ const TopBar: React.FC<{}> = () => {
     const { data: snap } = useSnap(currentLObjectPath);
     const saveSnap = useSaveSnap();
     const saveSnapAs = useSaveSnapAs();
+    const autosave = useSetting('snap.autosave') === true;
+    const setSetting = useSetSetting();
 
     const dragTimer = useRef<number | null>(null);
     const isDragDelayed = useRef(false);
@@ -87,6 +89,13 @@ const TopBar: React.FC<{}> = () => {
         }
     };
 
+    const toggleAutosave = () => {
+        const enable = !autosave;
+        setSetting.mutate({ path: 'snap.autosave', value: enable });
+        // Save right away the modifications made before enabling the auto save
+        if (enable && snap?.id && snap.has_changed) saveSnap.mutate({ snapId: snap.id, path: currentLObjectPath! });
+    };
+
     const exportToHTML = () => {
         if (!snap || !snap.id) return;
         const snapId = snap.id;
@@ -133,6 +142,7 @@ const TopBar: React.FC<{}> = () => {
                                     },
                                     disabled: !snap?.id,
                                 },
+                                { label: 'Auto save', onClick: toggleAutosave, checked: autosave },
                                 { type: 'separator' },
                                 { label: 'Export to HTML', onClick: exportToHTML, disabled: !snap },
                                 { type: 'separator' },

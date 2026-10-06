@@ -6,7 +6,7 @@ import tempfile
 import pytest
 from fastapi.testclient import TestClient
 from snapcheck.snap.rating import Rating, RatingScale, RatingScaleItem
-from snapcheck.snap.snap import Board, Snap
+from snapcheck.snap.snap import Board, Snap, load_snap
 from snapserve.app import app as lepton_app
 
 
@@ -133,3 +133,55 @@ class TestSessionIsolation:
         id_a = client.get(f"/objects/open/{snap_path}", headers=auth).json()["id"]
         id_b = client.get(f"/objects/open/{snap_path}", headers=auth).json()["id"]
         assert id_a == id_b
+
+
+@pytest.fixture()
+def tmp_settings(monkeypatch):
+    """Write the settings in a temporary file and restore the auto save setting after the test."""
+    monkeypatch.setattr(lepton_app, "settings_f", op.join(tempfile.mkdtemp(prefix="snap_settings_"), "settings.json"))
+    yield lepton_app.settings
+    lepton_app.settings.get("snap.autosave").set_value(None)
+
+
+class TestSettings:
+    def test_set_setting(self, client, auth, tmp_settings):
+        r = client.put("/settings/snap.autosave", headers=auth, json={"value": True})
+        assert r.status_code == 200
+        assert r.json()["value"] is True
+        assert op.isfile(lepton_app.settings_f)
+        # None resets to the default value
+        assert client.put("/settings/snap.autosave", headers=auth, json={"value": None}).json()["value"] is False
+
+    def test_set_setting_errors(self, client, auth, tmp_settings):
+        assert client.put("/settings/snap.unknown", headers=auth, json={"value": True}).status_code == 404
+        assert client.put("/settings/snap.autosave", headers=auth, json={"value": "yes"}).status_code == 400
+        assert client.put("/settings/files.n_history", headers=auth, json={"value": True}).status_code == 400
+
+    def test_add_group_keeps_stored_values(self, tmp_settings):
+        from lepton.settings.models import Setting, Settings, SettingsGroup
+
+        settings = Settings(groups=[SettingsGroup("g", "G", [Setting("a", "A", "int", default=1, value=5)])])
+        settings.add_group(
+            SettingsGroup("g", "New G", [Setting("a", "New A", "int", default=2), Setting("b", "B", "bool")])
+        )
+        assert settings.groups[0].title == "New G"
+        assert settings.get("g.a").label == "New A"
+        assert settings.get("g.a").value == 5
+        assert settings.get("g.b").value is None
+
+    def test_autosave(self, client, auth, snap_path, tmp_settings):
+        snap = client.get(f"/objects/open/{snap_path}", headers=auth).json()
+        sid, rid = snap["id"], snap["ratings"][0]["id"]
+        field = f"ratings.{{id:{rid}}}.value"
+
+        # Disabled: the modification is not saved
+        r = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1})
+        assert r.json()["has_changed"] is True
+
+        # Enabled: each modification is saved
+        client.put("/settings/snap.autosave", headers=auth, json={"value": True})
+        r = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": None})
+        assert r.json()["has_changed"] is False
+        r = client.patch(f"/objects/{sid}/field", headers=auth, json={"field_path": field, "value": 1})
+        assert r.json()["has_changed"] is False
+        assert load_snap(snap_path).ratings[0].value == 1

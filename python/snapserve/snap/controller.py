@@ -11,10 +11,12 @@ from fastapi import Depends, HTTPException
 from fastapi.responses import FileResponse
 from lepton.session.controller import (
     CRUDRouter,
+    FieldUpdateRequest,
     LightweightResponse,
     SessionStore,
     get_session_from_token,
 )
+from lepton.utils import get_lepton_app
 from snapcheck.snap.snap import Snap
 from starlette.background import BackgroundTask
 
@@ -130,7 +132,9 @@ class SnapRouter(CRUDRouter):
             background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
         )
 
-    def reset_rating_value(self, snap_id: str, rating_id: str, session=Depends(get_session_from_token)):
+    def reset_rating_value(
+        self, snap_id: str, rating_id: str, session=Depends(get_session_from_token), lepton=Depends(get_lepton_app)
+    ):
         """Reset a rating of a snap to its default state (default value, no comment)."""
         item = self.store.get_by_id(snap_id)
         if not item:
@@ -145,8 +149,37 @@ class SnapRouter(CRUDRouter):
             rating.reset()
             snap._has_changed = True
             item.increment_version()
+            self.autosave(snap_id, lepton)
 
         return LightweightResponse(ok=True, version=item.version, has_changed=snap._has_changed, timestamp=time.time())
+
+    def update_field(
+        self,
+        snap_id: str,
+        update: FieldUpdateRequest,
+        session=Depends(get_session_from_token),
+        lepton=Depends(get_lepton_app),
+    ):
+        """Update a field of a snap, then save it if the auto save is enabled."""
+        resp = super().update_field(snap_id, update, session)
+        if self.autosave(snap_id, lepton):
+            resp.has_changed = False
+        return resp
+
+    def autosave(self, snap_id: str, lepton) -> bool:
+        """Save the snap if it has unsaved changes and the ``snap.autosave`` setting is enabled.
+
+        A failing save is logged but does not fail the modification. Returns True if the snap has been saved.
+        """
+        item = self.store.get_by_id(snap_id)
+        if not item or not item.object._has_changed or not lepton.settings.get("snap.autosave").value:
+            return False
+        try:
+            self.store.save(snap_id)
+        except Exception:
+            self.store.logger.exception(f"Auto save of {snap_id} failed")
+            return False
+        return True
 
     def on_field_update(self, snap_id, session, update, did_change):
         """Mark a rating as not default anymore when its value or comment is modified."""

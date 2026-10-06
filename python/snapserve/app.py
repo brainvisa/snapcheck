@@ -17,6 +17,7 @@ import snapserve.content.controller as content
 import snapserve.files.controller as files
 import snapserve.snap.controller as snap
 from lepton.app import LeptonApp, LeptonConfig
+from lepton.settings.models import Setting, SettingsGroup
 from lepton_common.objects import IOHelper
 from snapcheck.snap import load_snap, new_snap, save_snap
 from snapserve.snap.models import SnapModel
@@ -39,6 +40,23 @@ config.allow_origins = config.allow_origins + extra_origins
 app = LeptonApp(config, IOHelper(SnapModel, load_snap, save_snap, new_snap), crud_router_cls=snap.SnapRouter)
 app.include_router(files.router, tags=["files"], prefix="/files")
 app.include_router(content.router, tags=["content"], prefix="/content")
+
+# Settings specific to SnapCheck (the values chosen by the user are kept in the settings file)
+app.add_settings_group(
+    SettingsGroup(
+        id="snap",
+        title="Snap",
+        settings=[
+            Setting(
+                id="autosave",
+                label="Auto save",
+                description="Save the snap after each modification.",
+                type="bool",
+                default=False,
+            ),
+        ],
+    )
+)
 
 # Title and description of the OpenAPI schema, displayed by the interactive documentation of the
 # API (/docs and /redoc) and in the SnapCheck documentation

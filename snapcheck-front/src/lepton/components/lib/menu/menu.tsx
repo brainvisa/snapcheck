@@ -35,7 +35,12 @@ const SubMenu: React.FC<{
                         onMouseEnter={() => setOpenIndex(idx)}
                         onMouseLeave={() => setOpenIndex(null)}
                     >
-                        <span className="grow">{child.label}</span>
+                        <span className="grow">
+                            {child.checked !== undefined && (
+                                <span className={'menu-checkbox' + (child.checked ? ' checked' : '')} />
+                            )}
+                            {child.label}
+                        </span>
                         {child.children && <span className="submenu-arrow">▶</span>}
                         {child.children && openIndex === idx && (
                             <div className="submenu-child">

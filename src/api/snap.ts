@@ -1,14 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     getAllSettingsOptions,
+    getAllSettingsQueryKey,
     getStaticContentOptions,
     listDirectoryOptions,
     listRootDirectoryOptions,
     openOptions,
     openQueryKey,
 } from './generated/@tanstack/react-query.gen';
-import { close, patchField, resetRating, save, saveAs } from './generated/sdk.gen';
-import type { LightweightResponse, SnapModel } from './generated/types.gen';
+import { close, patchField, resetRating, save, saveAs, setSetting } from './generated/sdk.gen';
+import type { LightweightResponse, SettingsGroupModel, SnapModel } from './generated/types.gen';
 import { setByPath } from './setByPath';
 
 /** Query key for a snap document, keyed by its file path (single source of truth). */
@@ -168,6 +169,56 @@ export function useCloseSnap() {
 
 export function useSettingsQuery() {
     return useQuery({ ...getAllSettingsOptions(), staleTime: Infinity });
+}
+
+/** Value of a setting (`<group>.<setting>`), read from the cached settings. */
+export function useSetting(path: string) {
+    const { data } = useSettingsQuery();
+    const [groupId, settingId] = path.split('.');
+    return data?.find((g) => g.id === groupId)?.settings.find((s) => s.id === settingId)?.value;
+}
+
+type SettingValue = string | boolean | number | null;
+
+/** Replace the value of a setting in a list of settings groups (immutable). */
+function withSettingValue(groups: SettingsGroupModel[], path: string, value: SettingValue): SettingsGroupModel[] {
+    const [groupId, settingId] = path.split('.');
+    return groups.map((g) =>
+        g.id !== groupId
+            ? g
+            : { ...g, settings: g.settings.map((s) => (s.id === settingId ? { ...s, value: value ?? s.default } : s)) },
+    );
+}
+
+/** Set a setting on the server (saved in the user config), applied optimistically to the cached settings. */
+export function useSetSetting() {
+    const qc = useQueryClient();
+    const key = getAllSettingsQueryKey();
+
+    return useMutation({
+        mutationFn: async (vars: { path: string; value: SettingValue }) => {
+            const { data } = await setSetting({
+                path: { path: vars.path },
+                body: { value: vars.value },
+                throwOnError: true,
+            });
+            return data!;
+        },
+        onMutate: async (vars) => {
+            await qc.cancelQueries({ queryKey: key });
+            const prev = qc.getQueryData<SettingsGroupModel[]>(key);
+            if (prev) qc.setQueryData(key, withSettingValue(prev, vars.path, vars.value));
+            return { prev };
+        },
+        onError: (_err, _vars, ctx: any) => {
+            if (ctx?.prev) qc.setQueryData(key, ctx.prev);
+            qc.invalidateQueries({ queryKey: key });
+        },
+        onSuccess: (setting, vars) => {
+            const cur = qc.getQueryData<SettingsGroupModel[]>(key);
+            if (cur) qc.setQueryData(key, withSettingValue(cur, vars.path, setting.value ?? null));
+        },
+    });
 }
 
 export function useDirectory(path: string | null, extensions?: string[]) {
