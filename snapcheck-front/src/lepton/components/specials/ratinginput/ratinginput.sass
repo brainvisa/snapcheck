@@ -23,9 +23,25 @@
             color: #d4d4d4
             font-size: 0.9rem
 
+        .rating-first-line
+            display: flex
+            align-items: center
+            gap: 0.4em
+            min-height: 1.8rem
+
+        .rating-spacer
+            flex-grow: 1
+
+        .rating-reset-btn
+            min-width: 0
+            padding: 2px
+            color: #ddd
+
+            &.Mui-disabled
+                color: #666
+
         .rating-select
-            float: right
-            display: block
+            min-width: 7rem
             background-color: #444343
             color: #d4d4d4
             font-size: 0.8rem
@@ -33,6 +49,7 @@
         .rating-second-line
             display: flex
             width: 100%
+            margin-top: 0.15em
 
             .rating-infos-btn
                 padding: 5px 4px 0px 4px
@@ -46,7 +63,6 @@
                 width: 100%
                 box-sizing: border-box
                 padding: 0.1rem
-                margin-left: 5%
                 border: 1px solid #292929
                 background-color: #444343
                 opacity: 0.8

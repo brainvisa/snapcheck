@@ -3,12 +3,18 @@
 import mimetypes
 import os.path as op
 import shutil
+import time
 from pathlib import Path
 from tempfile import mkdtemp
 
 from fastapi import Depends, HTTPException
 from fastapi.responses import FileResponse
-from lepton.session.controller import CRUDRouter, SessionStore, get_session_from_token
+from lepton.session.controller import (
+    CRUDRouter,
+    LightweightResponse,
+    SessionStore,
+    get_session_from_token,
+)
 from snapcheck.snap.snap import Snap
 from starlette.background import BackgroundTask
 
@@ -26,6 +32,13 @@ class SnapRouter(CRUDRouter):
         )
         self.add_api_route(
             "/{snap_id}/pdf/{path:path}", self.download_as_pdf, methods=["GET"], response_class=FileResponse
+        )
+        self.add_api_route(
+            "/{snap_id}/ratings/{rating_id}/reset",
+            self.reset_rating_value,
+            methods=["POST"],
+            name="reset_rating",
+            response_model=LightweightResponse,
         )
 
     def get_image(self, snap_id: str, src: str, session=Depends(get_session_from_token)):
@@ -116,3 +129,40 @@ class SnapRouter(CRUDRouter):
             headers={"Content-Disposition": f'attachment; filename="{op.basename(export_path)}"'},
             background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
         )
+
+    def reset_rating_value(self, snap_id: str, rating_id: str, session=Depends(get_session_from_token)):
+        """Reset a rating of a snap to its default state (default value, no comment)."""
+        item = self.store.get_by_id(snap_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Snap not found")
+        snap: Snap = item.object
+        rating = next((r for r in snap.ratings or [] if r.id == rating_id), None)
+        if not rating:
+            raise HTTPException(status_code=404, detail="Rating not found")
+
+        # Only bump the version when the rating was actually modified
+        if not rating.is_default:
+            rating.reset()
+            snap._has_changed = True
+            item.increment_version()
+
+        return LightweightResponse(ok=True, version=item.version, has_changed=snap._has_changed, timestamp=time.time())
+
+    def on_field_update(self, snap_id, session, update, did_change):
+        """Mark a rating as not default anymore when its value or comment is modified."""
+        parts = update.field_path.split(".")
+        if not did_change or len(parts) != 3 or parts[0] != "ratings" or parts[2] not in ("value", "comment"):
+            return
+        item = self.store.get_by_id(snap_id)
+        if not item:
+            return
+        ratings = item.object.ratings or []
+        selector = parts[1]
+        if selector.startswith("{id:") and selector.endswith("}"):
+            rating = next((r for r in ratings if r.id == selector[4:-1]), None)
+        elif selector.isdigit() and int(selector) < len(ratings):
+            rating = ratings[int(selector)]
+        else:
+            rating = None
+        if rating:
+            rating.is_default = False

@@ -7,7 +7,7 @@ import {
     openOptions,
     openQueryKey,
 } from './generated/@tanstack/react-query.gen';
-import { close, patchField, save, saveAs } from './generated/sdk.gen';
+import { close, patchField, resetRating, save, saveAs } from './generated/sdk.gen';
 import type { LightweightResponse, SnapModel } from './generated/types.gen';
 import { setByPath } from './setByPath';
 
@@ -58,12 +58,61 @@ export function usePatchField(path: string | null, snapId: string | undefined) {
             await qc.cancelQueries({ queryKey: key });
             const prev = qc.getQueryData<SnapModel>(key);
             if (prev) {
-                const next = setByPath({ ...prev, has_changed: true }, vars.fieldPath, vars.value);
+                let next = setByPath({ ...prev, has_changed: true }, vars.fieldPath, vars.value);
+                // Same rule as the backend: editing a rating value or comment makes it not default anymore
+                const m = vars.fieldPath.match(/^(ratings\.[^.]+)\.(value|comment)$/);
+                if (m) next = setByPath(next, `${m[1]}.is_default`, false);
                 qc.setQueryData<SnapModel>(key, next);
             }
             return { prev };
         },
         onError: (_err, _vars, ctx: any) => {
+            if (key && ctx?.prev) qc.setQueryData(key, ctx.prev);
+            if (key) qc.invalidateQueries({ queryKey: key });
+        },
+        onSuccess: (resp) => {
+            if (!key) return;
+            const cur = qc.getQueryData<SnapModel>(key);
+            if (cur) qc.setQueryData<SnapModel>(key, { ...cur, version: resp.version, has_changed: resp.has_changed });
+        },
+    });
+}
+
+/**
+ * Reset a rating of a snap to its default state (default value, no comment).
+ * Shares the patch scope so it is serialized with the field updates of the same snap.
+ */
+export function useResetRating(path: string | null, snapId: string | undefined) {
+    const qc = useQueryClient();
+    const key = path ? snapKey(path) : null;
+
+    return useMutation({
+        scope: { id: snapId ? `lobject:${snapId}` : 'lobject' },
+        mutationFn: async (ratingId: string): Promise<LightweightResponse> => {
+            if (!snapId) throw new Error('No snap id');
+            const { data } = await resetRating({
+                path: { snap_id: snapId, rating_id: ratingId },
+                throwOnError: true,
+            });
+            return data!;
+        },
+        onMutate: async (ratingId) => {
+            if (!key) return {};
+            await qc.cancelQueries({ queryKey: key });
+            const prev = qc.getQueryData<SnapModel>(key);
+            const rating = prev?.ratings?.find((r) => r.id === ratingId);
+            if (prev && rating && !rating.is_default) {
+                const next = setByPath({ ...prev, has_changed: true }, `ratings.{id:${ratingId}}`, {
+                    ...rating,
+                    value: rating.default ?? null,
+                    comment: null,
+                    is_default: true,
+                });
+                qc.setQueryData<SnapModel>(key, next);
+            }
+            return { prev };
+        },
+        onError: (_err, _ratingId, ctx: any) => {
             if (key && ctx?.prev) qc.setQueryData(key, ctx.prev);
             if (key) qc.invalidateQueries({ queryKey: key });
         },

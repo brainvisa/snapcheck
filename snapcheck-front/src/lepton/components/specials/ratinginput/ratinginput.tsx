@@ -1,16 +1,19 @@
 import type { RatingModel, RatingScaleItem } from '@lepton/api-client';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import Button from '@mui/material/Button';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import './ratinginput.css';
 
 interface RatingInputProps {
     rating: RatingModel;
     onChange?: (ratingId: RatingModel['id'], field: string, value: any) => void;
+    onReset?: (ratingId: RatingModel['id']) => void;
     highlight?: boolean;
 }
 
-const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }) => {
+const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, onReset, highlight }) => {
     // The value is driven directly by the cached document (single source of truth):
     // no local copy, so a change made anywhere (sidebar, board menu) shows up here.
     const selectedValue = rating.value;
@@ -18,10 +21,10 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
     // The comment is free text: keep a local draft while typing, commit on blur.
     const [comment, setComment] = useState<string>(rating.comment || '');
     const commentInputRef = useRef<HTMLInputElement>(null);
-    // Reseed the draft only when switching to another rating.
+    // Reseed the draft when switching to another rating or when the comment changes elsewhere (e.g. reset).
     useEffect(() => {
         setComment(rating.comment || '');
-    }, [rating.id]);
+    }, [rating.id, rating.comment]);
 
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const raw = event.target.value;
@@ -46,10 +49,21 @@ const RatingInput: React.FC<RatingInputProps> = ({ rating, onChange, highlight }
         <div className={`rating-input ${highlight ? ' rating-highlight' : ''}`}>
             <div className="rating-state-bar"></div>
             <div className="rating-content">
-                <div>
+                <div className="rating-first-line">
                     <span className="rating-name">{name}</span>
+                    <span className="rating-spacer" />
+                    { rating.default != null && 
+                        <Button 
+                            className="rating-reset-btn" size="small" 
+                            color="inherit" 
+                            title="Reset" 
+                            onClick={() => onReset && onReset(rating.id)} 
+                            disabled={rating.is_default}>
+                            <RestartAltIcon fontSize="small" />
+                        </Button>
+                    }
                     { rating.is_boolean ? (
-                        <input type="checkbox" 
+                        <input type="checkbox"
                             checked={selectedValue === 1}
                             onChange={(event) => {
                                 if (onChange) {

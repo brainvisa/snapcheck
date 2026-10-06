@@ -139,10 +139,10 @@ const TopBar: React.FC<{}> = () => {
                                 { label: 'Quit', onClick: close },
                             ],
                         },
-                        {
-                            label: 'Edit',
-                            children: [],
-                        },
+                        // {
+                        //     label: 'Edit',
+                        //     children: [],
+                        // },
                         {
                             label: 'View',
                             children: [

@@ -1,4 +1,4 @@
-import { usePatchField, useSnap } from '@api/snap';
+import { usePatchField, useResetRating, useSnap } from '@api/snap';
 import type { RatingModel } from '@lepton/api-client';
 import { useLObjectSession } from '@lepton/core/contexts/SessionContext';
 import React from 'react';
@@ -30,6 +30,7 @@ const SnapControl: React.FC<{}> = () => {
     const { currentLObjectPath, currentObjectSettings } = useLObjectSession();
     const { data: snap } = useSnap(currentLObjectPath);
     const patchField = usePatchField(currentLObjectPath, snap?.id ?? undefined);
+    const resetRating = useResetRating(currentLObjectPath, snap?.id ?? undefined);
 
     const currentBoardIndex: number = currentObjectSettings.currentBoard || 0;
     const currentBoard = snap?.boards ? snap.boards[currentBoardIndex] : null;
@@ -61,6 +62,7 @@ const SnapControl: React.FC<{}> = () => {
                                 key={rating.id}
                                 rating={rating}
                                 onChange={updateRatingField}
+                                onReset={(id) => id && resetRating.mutate(id)}
                                 highlight={
                                     (showAllratings && !!currentBoard && boardHasRating(currentBoard, rating)) || false
                                 }

@@ -91,6 +91,10 @@ class Rating(BaseModel):
         What has to be evaluated.
     scale : RatingScale or None
         Scale of the possible values. Leave it to None for a comment only rating.
+    default : int or None
+        The default value of the rating. It should be one of the values of the scale or None.
+    is_default : bool
+        If True, the default value is considered as the initial value of the rating.
     is_boolean : bool
         If True, the rating is a boolean (pass / fail).
     allow_comment : bool
@@ -111,13 +115,21 @@ class Rating(BaseModel):
     id: str | None = None
     name: str = ""
     description: str = ""
+
     scale: RatingScale | None = None
+    default: int | None = None
+    is_default: bool = True
 
     is_boolean: bool = False
     allow_comment: bool = True
 
     value: int | None = None
     comment: str | None = None
+
+    def model_post_init(self, context=None):
+        """Post-initialization to set the default value to value if not provided."""
+        if self.default is not None and self.value is None:
+            self.value = self.default
 
     @model_validator(mode="after")
     def generate_id(self):
@@ -126,3 +138,9 @@ class Rating(BaseModel):
             # If not provided, generate an ID from the name
             self.id = self.name.lower().replace(" ", "_")
         return self
+
+    def reset(self):
+        """Reset the rating to its default state."""
+        self.value = self.default
+        self.comment = None
+        self.is_default = True

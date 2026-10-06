@@ -201,7 +201,6 @@ python python/snapclient/main.py
 Snap
 ~~~~
 * pouvoir ajouter des notes à un board voir un snap
-* implémenter les notes booléenne et avac/sans commentaires
 * ajouter un commentaire global
 * note par défaut avec un flag qui dit si la valeur a été changée
 * flag pour identifier si le snap est a été complété

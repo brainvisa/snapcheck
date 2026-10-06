@@ -42,15 +42,14 @@ plt.show()
 # ----------------
 # A scale lists the levels the reviewer chooses from. Each level has a name, a value (stored in
 # the rating once chosen) and a color, used to display it in the application.
+toobad = RatingScaleItem(name="Too bad", value=0, description="Unusable", color="#330C00")
+bad = RatingScaleItem(name="Bad", value=1, description="Usable with care", color="#5f3c00")
+good = RatingScaleItem(name="Good", value=2, description="Minor defects", color="#5A5400")
+perfect = RatingScaleItem(name="Perfect", value=3, description="No defect", color="#364900")
 
 scale = RatingScale(
     description="Quality",
-    ratings=[
-        RatingScaleItem(name="Too bad", value=0, description="Unusable", color="#330C00"),
-        RatingScaleItem(name="Bad", value=1, description="Usable with care", color="#5f3c00"),
-        RatingScaleItem(name="Good", value=2, description="Minor defects", color="#5A5400"),
-        RatingScaleItem(name="Perfect", value=3, description="No defect", color="#364900"),
-    ],
+    ratings=[toobad, bad, good, perfect],
 )
 scale.check()  # Raises an error if two levels have the same name or value
 
@@ -60,8 +59,8 @@ scale.check()  # Raises an error if two levels have the same name or value
 # A rating is a question to answer. Its ``id`` is generated from its name when it is not given.
 # A rating without scale only collects a comment.
 
-axial = Rating(name="Axial view", description="Quality of the axial view", scale=scale)
-coronal = Rating(name="Coronal view", description="Quality of the coronal view", scale=scale)
+axial = Rating(name="Axial view", description="Quality of the axial view", scale=scale, default=good.value)
+coronal = Rating(name="Coronal view", description="Quality of the coronal view", scale=scale, default=good.value)
 lightbox = Rating(name="Lightbox", description="Quality of the slices of the lightbox", scale=scale)
 observations = Rating(name="Observations", description="General observations")
 
@@ -103,7 +102,7 @@ snap = Snap(
 # %%
 # Global Boolean ratings
 # -----------------------
-# A rating can be also added globally to the Snap (without beeing used for any specific board). 
+# A rating can be also added globally to the Snap (without beeing used for any specific board).
 # It can also be a boolean without any scale.
 bool_rating = Rating(name="Amazing", description="This snap is amazing", is_boolean=True)
 snap.ratings.append(bool_rating)
